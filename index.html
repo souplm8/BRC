@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>BIG RED CLOCK</title>
+  <style>
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 37.5px;
+      height: 18px;
+      margin-right: 10px;
+      transform: scale(0.75);
+      transform-origin: left center;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 13.5px;
+      width: 13.5px;
+      left: 2.25px;
+      bottom: 2.25px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    input:checked + .slider:before {
+      transform: translateX(19.5px);
+    }
+    @font-face {
+      font-family: 'NimbusSansL';
+      src: url('font/NimbusSanL-Reg.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    body {
+      margin: 0;
+      background-color: black;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .timer {
+      position: fixed;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'NimbusSansL', sans-serif;
+      font-size: 40px;
+      color: white;
+    }
+    svg {
+      width: 1080px;
+      height: 1080px;
+    }
+    #output {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'NimbusSansL', sans-serif;
+      font-size: 120px;
+      font-weight: bold;
+      text-align: center;
+      color: red;
+      cursor: pointer;
+    }
+    #date {
+      position: fixed;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'NimbusSansL', sans-serif;
+      font-size: 50px;
+      color: red;
+    }
+    #sync-status {
+      position: absolute;
+      top: 38%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'NimbusSansL', sans-serif;
+      font-size: 28px;
+      font-weight: bold;
+      background-color: black;
+      padding: 5px 10px;
+      border-radius: 5px;
+      z-index: 1000;
+    }
+    #sync-status.ok {
+      color: limegreen;
+    }
+    #sync-status.error {
+      color: yellow;
+    }
+    #logo {
+      position: fixed;
+      top: 70%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100px;
+      height: auto;
+    }
+    #wrapper {
+      width: 1080px;
+      height: 1080px;
+      transform-origin: top left;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="wrapper">
+    <svg viewBox="0 0 1080 1080">
+      <g id="dots" transform="translate(540,540) rotate(-90)"></g>
+      <g id="ticks" transform="translate(540,540) rotate(-90)"></g>
+    </svg>
+
+    <img id="logo" src="media/logo.png" alt="Logo" onerror="this.style.display='none';" />
+    <div id="output"></div>
+    <div id="date"></div>
+    <div id="timer1" class="timer" style="top:15%;"></div>
+    <div id="timer2" class="timer" style="top:21%;"></div>
+    <div id="timer3" class="timer" style="top:27%;"></div>
+    <div id="sync-status"></div>
+  </div>
+
+  <div id="offset-controls" style="position:fixed; top:20px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10; display:none; text-align: center;">
+    <label for="timezoneSelect">Timezone:</label>
+    <select id="timezoneSelect">
+      <option value="Pacific/Midway">(UTC-11:00) Midway</option>
+      <option value="America/Adak">(UTC-10:00) Adak</option>
+      <option value="Pacific/Honolulu">(UTC-10:00) Honolulu</option>
+      <option value="America/Anchorage">(UTC-09:00) Anchorage</option>
+      <option value="America/Los_Angeles">(UTC-08:00) Los Angeles</option>
+      <option value="America/Denver">(UTC-07:00) Denver</option>
+      <option value="America/Chicago">(UTC-06:00) Chicago</option>
+      <option value="America/New_York">(UTC-05:00) New York</option>
+      <option value="America/Caracas">(UTC-04:00) Caracas</option>
+      <option value="America/Halifax">(UTC-04:00) Halifax</option>
+      <option value="America/St_Johns">(UTC-03:30) St. John's</option>
+      <option value="America/Argentina/Buenos_Aires">(UTC-03:00) Buenos Aires</option>
+      <option value="Atlantic/South_Georgia">(UTC-02:00) South Georgia</option>
+      <option value="Atlantic/Azores">(UTC-01:00) Azores</option>
+      <option value="UTC">(UTC+00:00) UTC</option>
+      <option value="Europe/London">(UTC+01:00) London</option>
+      <option value="Europe/Paris">(UTC+02:00) Paris</option>
+      <option value="Europe/Warsaw" selected>(UTC+02:00) Warsaw</option>
+      <option value="Europe/Moscow">(UTC+03:00) Moscow</option>
+      <option value="Asia/Tehran">(UTC+03:30) Tehran</option>
+      <option value="Asia/Dubai">(UTC+04:00) Dubai</option>
+      <option value="Asia/Kabul">(UTC+04:30) Kabul</option>
+      <option value="Asia/Karachi">(UTC+05:00) Karachi</option>
+      <option value="Asia/Calcutta">(UTC+05:30) Calcutta</option>
+      <option value="Asia/Kathmandu">(UTC+05:45) Kathmandu</option>
+      <option value="Asia/Dhaka">(UTC+06:00) Dhaka</option>
+      <option value="Asia/Bangkok">(UTC+07:00) Bangkok</option>
+      <option value="Asia/Shanghai">(UTC+08:00) Shanghai</option>
+      <option value="Asia/Tokyo">(UTC+09:00) Tokyo</option>
+      <option value="Australia/Sydney">(UTC+10:00) Sydney</option>
+      <option value="Pacific/Noumea">(UTC+11:00) Noumea</option>
+      <option value="Pacific/Auckland">(UTC+12:00) Auckland</option>
+    </select>
+    <br>
+    <label class="switch">
+      <input type="checkbox" id="toggleSyncIcon" checked>
+      <span class="slider"></span>
+    </label>
+    <span>Show sync icon</span>
+    <br>
+    <label class="switch">
+      <input type="checkbox" id="toggleAbout">
+      <span class="slider"></span>
+    </label>
+    <span>Help</span>
+  </div>
+  <div id="timer-controls" style="position:fixed; top:120px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10; display:none; text-align: center;">
+    <div>
+      <strong>Visibility and Activation</strong><br>
+      <label class="switch">
+        <input type="checkbox" id="enableTimer1" checked>
+        <span class="slider"></span>
+      </label>
+      <span>Enable Timer 1</span><br>
+      <label class="switch">
+        <input type="checkbox" id="enableTimer2" checked>
+        <span class="slider"></span>
+      </label>
+      <span>Enable Timer 2</span><br>
+      <label class="switch">
+        <input type="checkbox" id="enableTimer3" checked>
+        <span class="slider"></span>
+      </label>
+      <span>Enable Timer 3</span><br>
+      <label class="switch">
+        <input type="checkbox" id="hideTimer1">
+        <span class="slider"></span>
+      </label>
+      <span>Hide Timer 1</span><br>
+      <label class="switch">
+        <input type="checkbox" id="hideTimer2">
+        <span class="slider"></span>
+      </label>
+      <span>Hide Timer 2</span><br>
+      <label class="switch">
+        <input type="checkbox" id="hideTimer3">
+        <span class="slider"></span>
+      </label>
+      <span>Hide Timer 3</span>
+    </div>
+    <hr>
+    <div>
+      <strong>Set Time</strong><br>
+      <label for="timer1Input">Timer 1 (date and time):</label><br>
+      <input type="datetime-local" id="timer1Input"><br>
+      <label for="timer2Input">Timer 2 (date and time):</label><br>
+      <input type="datetime-local" id="timer2Input"><br>
+      <label for="timer3Input">Timer 3 (date and time):</label><br>
+      <input type="datetime-local" id="timer3Input">
+    </div>
+    <hr>
+    <div>
+      <strong>Actions</strong><br>
+      <button id="setTimers">Set Timers</button><br><br>
+      <button id="resetTimers">Reset All Timers</button><br><br>
+      <button id="resetTimer1">Reset Timer 1</button><br>
+      <button id="resetTimer2">Reset Timer 2</button><br>
+      <button id="resetTimer3">Reset Timer 3</button>
+    </div>
+  </div>
+
+  <script>
+    const svgDots = document.getElementById('dots');
+    const svgTicks = document.getElementById('ticks');
+    const radiusDots = 450;
+    const radiusTicks = 480;
+    const dots = [];
+
+    for (let i = 0; i < 60; i += 5) {
+      const angle = (i * 6) * Math.PI / 180;
+      const x = radiusTicks * Math.cos(angle);
+      const y = radiusTicks * Math.sin(angle);
+      const tick = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      tick.setAttribute("cx", x);
+      tick.setAttribute("cy", y);
+      tick.setAttribute("r", 10);
+      tick.setAttribute("fill", "red");
+      svgTicks.appendChild(tick);
+    }
+
+    for (let i = 0; i < 60; i++) {
+      const angle = (i * 6) * Math.PI / 180;
+      const x = radiusDots * Math.cos(angle);
+      const y = radiusDots * Math.sin(angle);
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", x);
+      circle.setAttribute("cy", y);
+      circle.setAttribute("r", 5);
+      circle.setAttribute("fill", "red");
+      svgDots.appendChild(circle);
+      dots.push(circle);
+    }
+
+    // --- Deklaracje timerów i flag zakończenia ---
+    // Przesunięcie czasu względem serwera (synchronizacja)
+    let timeOffset = Number(localStorage.getItem("lastValidOffset")) || 0;
+    // Docelowe czasy zakończenia timerów (w ms od 1970)
+    let timer1Target = null;
+    let timer2Target = null;
+    let timer3Target = null;
+    // Flagi informujące, czy dany timer został zakończony
+    let timer1Finished = false;
+    let timer2Finished = false;
+    let timer3Finished = false;
+
+    // --- Funkcja aktualizująca zegar oraz wizualizację timerów ---
+    function updateClock() {
+      // Oblicz aktualny czas z uwzględnieniem przesunięcia (synchronizacja)
+      const now = new Date(Date.now() + timeOffset);
+      // Formatowanie godzin, minut, sekund i części setnych sekundy
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const milliseconds = String(now.getMilliseconds()).padStart(3, '0').slice(0,2);
+      // Wyświetlanie aktualnego czasu na głównym zegarze
+      document.getElementById("output").innerText = `${hours}:${minutes}:${seconds}.${milliseconds}`;
+      // Wyświetlanie daty
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      document.getElementById("date").innerText = `${year}.${month}.${day}`;
+      // Aktualizacja kropek sekundowych na okręgu
+      const currentSecond = now.getSeconds();
+      for (let i = 0; i < 60; i++) {
+        dots[i].setAttribute("fill", i <= currentSecond ? "red" : "black");
+      }
+      // Aktualny czas w ms (do obliczeń timerów)
+      const nowTime = now.getTime();
+
+      // --- Funkcja aktualizująca pojedynczy timer ---
+      // targetTime - docelowy czas zakończenia timera (ms)
+      // elementId - id elementu HTML, gdzie wyświetlić timer
+      // finishedFlagName - nazwa flagi zakończenia timera (string, np. "timer1Finished")
+      // isElapsed - czy wyświetlać czas od przekroczenia (nieużywane w głównym kodzie)
+      function updateTimer(targetTime, elementId, finishedFlagName, isElapsed = false) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        if (isElapsed) {
+          // Pokazuj czas, jaki upłynął od przekroczenia timera
+          const elapsed = Math.max(0, nowTime - targetTime);
+          const h = String(Math.floor(elapsed / 3600000));
+          const m = String(Math.floor((elapsed % 3600000) / 60000)).padStart(2, '0');
+          const secondsRaw = Math.floor((elapsed % 60000) / 1000);
+          const s = secondsRaw === 60 ? '00' : String(secondsRaw).padStart(2, '0');
+          el.innerText = `+${h}:${m}:${s}`;
+          el.style.color = "aqua";
+          return;
+        }
+        // Różnica czasu do docelowego momentu
+        let diff = targetTime - nowTime;
+        if (diff >= 0) diff += 1000; // Dodaj 1s, aby timer nie znikał za wcześnie
+        let finished = window[finishedFlagName];
+        // Jeśli timer właśnie się zakończył, ustaw flagę zakończenia
+        if (!finished && diff < 1000) {
+          window[finishedFlagName] = true;
+        }
+        // Formatowanie wyświetlanego czasu
+        const absDiff = Math.abs(diff);
+        const h = String(Math.floor(absDiff / 3600000));
+        const m = String(Math.floor((absDiff % 3600000) / 60000)).padStart(2, '0');
+        const secondsRaw = Math.floor((absDiff % 60000) / 1000);
+        const s = secondsRaw === 60 ? '00' : String(secondsRaw).padStart(2, '0');
+        el.innerText = `${diff < 0 ? '+' : '-'}${h}:${m}:${s}`;
+        // Kolorowanie w zależności od stanu timera
+        if (diff > 0) {
+          if (diff <= 5 * 60 * 1000) {
+            el.style.color = "red"; // mniej niż 5 minut DO zdarzenia
+          } else if (diff <= 15 * 60 * 1000) {
+            el.style.color = "orange";
+          } else {
+            el.style.color = "white";
+          }
+        } else {
+          el.style.color = "lime"; // zdarzenie już minęło
+        }
+      }
+
+      // --- Aktualizacja wyświetlania timerów (widoczność, aktywacja) ---
+      if (timer1Target !== null && document.getElementById("enableTimer1").checked && !document.getElementById("hideTimer1").checked) {
+        const el = document.getElementById("timer1");
+        if (el) el.style.display = "block";
+        updateTimer(timer1Target, "timer1", "timer1Finished");
+      } else {
+        const t1 = document.getElementById("timer1");
+        t1.innerText = "";
+        t1.style.color = "white";
+        t1.style.display = "none";
+      }
+      if (timer2Target !== null && document.getElementById("enableTimer2").checked && !document.getElementById("hideTimer2").checked) {
+        const el = document.getElementById("timer2");
+        if (el) el.style.display = "block";
+        updateTimer(timer2Target, "timer2", "timer2Finished");
+      } else {
+        const t2 = document.getElementById("timer2");
+        t2.innerText = "";
+        t2.style.color = "white";
+        t2.style.display = "none";
+      }
+      if (timer3Target !== null && document.getElementById("enableTimer3").checked && !document.getElementById("hideTimer3").checked) {
+        const el = document.getElementById("timer3");
+        if (el) el.style.display = "block";
+        updateTimer(timer3Target, "timer3", "timer3Finished");
+      } else {
+        const t3 = document.getElementById("timer3");
+        t3.innerText = "";
+        t3.style.color = "white";
+        t3.style.display = "none";
+      }
+    }
+
+    async function synchronizeTime() {
+      const status = document.getElementById("sync-status");
+      try {
+        const timezoneSelect = document.getElementById("timezoneSelect");
+        const tz = timezoneSelect.value || "Europe/Warsaw";
+        const response = await fetch(`https://timeapi.io/api/Time/current/zone?timeZone=${tz}`);
+        if (!response.ok) throw new Error("Błąd pobierania czasu");
+        const data = await response.json();
+        const serverTime = new Date(data.dateTime).getTime();
+        const localTime = Date.now();
+        timeOffset = serverTime - localTime;
+        localStorage.setItem("lastValidOffset", timeOffset);
+        localStorage.setItem("lastUsedTimezone", tz);
+        status.textContent = "Ω";
+        status.className = "ok";
+      } catch (err) {
+        console.error("Synchronizacja czasu nie powiodła się:", err);
+        status.textContent = "Ω";
+        status.className = "error";
+      }
+    }
+
+    setInterval(updateClock, 10);
+    updateClock();
+    synchronizeTime();
+    setInterval(synchronizeTime, 300000);
+
+    function scaleToFitWindow() {
+      const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1080);
+      const wrapper = document.getElementById('wrapper');
+      wrapper.style.transform = `scale(${scale})`;
+      wrapper.style.left = `${(window.innerWidth - 1080 * scale) / 2}px`;
+      wrapper.style.top = `${(window.innerHeight - 1080 * scale) / 2}px`;
+    }
+    window.addEventListener('resize', scaleToFitWindow);
+    scaleToFitWindow();
+
+    const offsetControls = document.getElementById("offset-controls");
+    const timerControls = document.getElementById("timer-controls");
+    const output = document.getElementById("output");
+    const syncStatus = document.getElementById("sync-status");
+    const toggleSyncIcon = document.getElementById("toggleSyncIcon");
+    const timezoneSelect = document.getElementById("timezoneSelect");
+
+    function initializeTimezone() {
+      const savedTz = localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
+      timezoneSelect.value = savedTz;
+      timezoneSelect.addEventListener("change", () => {
+        localStorage.setItem("lastUsedTimezone", timezoneSelect.value);
+        synchronizeTime();
+      });
+    }
+
+    initializeTimezone();
+    syncStatus.style.display = toggleSyncIcon.checked ? "block" : "none";
+    toggleSyncIcon.addEventListener("change", () => {
+      syncStatus.style.display = toggleSyncIcon.checked ? "block" : "none";
+    });
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggleAbout = document.getElementById("toggleAbout");
+      const aboutBox = document.getElementById("about");
+      if (toggleAbout && aboutBox) {
+        toggleAbout.addEventListener("change", () => {
+          aboutBox.style.display = toggleAbout.checked ? "block" : "none";
+        });
+      }
+    });
+    output.addEventListener("click", () => {
+      if (offsetControls.style.display === "none") {
+        offsetControls.style.display = "block";
+        timerControls.style.display = "block";
+      } else {
+        offsetControls.style.display = "none";
+        timerControls.style.display = "none";
+      }
+    });
+
+    // --- Ustawianie timerów na podstawie pól formularza ---
+    document.getElementById("setTimers").addEventListener("click", () => {
+      const c1 = document.getElementById("timer1Input").value;
+      const c2 = document.getElementById("timer2Input").value;
+      const c3 = document.getElementById("timer3Input").value;
+
+      timer1Target = c1 ? new Date(c1).getTime() : null;
+      timer2Target = c2 ? new Date(c2).getTime() : null;
+      timer3Target = c3 ? new Date(c3).getTime() : null;
+
+      timer1Finished = false;
+      timer2Finished = false;
+      timer3Finished = false;
+    });
+
+    // --- Resetowanie wszystkich timerów ---
+    document.getElementById("resetTimers").addEventListener("click", () => {
+      timer1Target = null;
+      timer2Target = null;
+      timer3Target = null;
+      timer1Finished = false;
+      timer2Finished = false;
+      timer3Finished = false;
+      document.getElementById("timer1").innerText = "";
+      document.getElementById("timer2").innerText = "";
+      document.getElementById("timer3").innerText = "";
+    });
+
+    // --- Resetowanie pojedynczych timerów ---
+    document.getElementById("resetTimer1").addEventListener("click", () => {
+      timer1Target = null;
+      timer1Finished = false;
+      document.getElementById("timer1").innerText = "";
+    });
+    document.getElementById("resetTimer2").addEventListener("click", () => {
+      timer2Target = null;
+      timer2Finished = false;
+      document.getElementById("timer2").innerText = "";
+    });
+    document.getElementById("resetTimer3").addEventListener("click", () => {
+      timer3Target = null;
+      timer3Finished = false;
+      document.getElementById("timer3").innerText = "";
+    });
+  </script>
+</div>
+
+  <div id="about" style="position:fixed; bottom:20px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10; display:none;">
+    <strong>About BIG RED CLOCK</strong>
+    <p>
+      This fullscreen clock shows the current time with millisecond precision, a date, and up to three countdown timers.
+    </p>
+    <ul>
+      <li>Click on the red clock to toggle control panels (timezone, timer settings).</li>
+      <li>Use the timezone selector to sync with a preferred region.</li>
+      <li>Each timer can be enabled, hidden, set to a target date/time, or reset individually or all at once.</li>
+      <li>Timers turn red when under 5 minutes remaining, orange under 15 minutes, and green after time has passed.</li>
+      <li>The Ω symbol indicates time synchronization status: green = synced, yellow = failed.</li>
+    </ul>
+    <p>
+      <strong>Logo file:</strong> Place a file named <code>logo.png</code> inside the <code>media/</code> folder.<br>
+      <strong>Font file:</strong> Place the file <code>NimbusSanL-Reg.otf</code> inside the <code>font/</code> folder.<br>
+      <strong>Time sync API:</strong> The clock synchronizes time using the public endpoint <code>https://timeapi.io</code>.
+    </p>
+  </div>
+</body>
+</html>
