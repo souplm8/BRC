@@ -6,12 +6,7 @@ This Python-based HTTP server acts as a proxy between an NTP server and web clie
 
 📦 Installation
 
-1. Unpack the ZIP:
-
-unzip time_server_installers.zip
-cd install
-
-2. Run the installer for your operating system:
+Run the installer for your operating system:
 
 ✅ Windows:
 
