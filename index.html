@@ -316,19 +316,20 @@
 
     // --- updateClock: Updates the main clock and timer displays ---
     function updateClock() {
-      // Calculate the synchronized current time
-      const now = new Date(Date.now() + timeOffset);
-      // Format hours, minutes, seconds, and centiseconds
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      const milliseconds = String(now.getMilliseconds()).padStart(3, '0').slice(0,2);
-      // Update main clock UI
+      const tz = localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
+      const utcNow = Date.now() + timeOffset;
+      const localNow = luxon.DateTime.fromMillis(utcNow, { zone: "utc" }).setZone(tz);
+
+      const hours = String(localNow.hour).padStart(2, '0');
+      const minutes = String(localNow.minute).padStart(2, '0');
+      const seconds = String(localNow.second).padStart(2, '0');
+      const milliseconds = String(localNow.millisecond).padStart(3, '0').slice(0,2);
+
       document.getElementById("output").innerText = `${hours}:${minutes}:${seconds}.${milliseconds}`;
-      // Update date display
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
+
+      const year = localNow.year;
+      const month = String(localNow.month).padStart(2, '0');
+      const day = String(localNow.day).padStart(2, '0');
       document.getElementById("date").innerText = `${year}.${month}.${day}`;
       // Update second dots: highlight dots up to current second
       const currentSecond = now.getSeconds();
@@ -451,15 +452,13 @@
           const response = await fetch(`http://${apiAddr}/api/time?ntp=${ntpAddr}`);
           if (!response.ok) throw new Error("Local time fetch error");
           const data = await response.json();
-          // Convert the UTC time from the server into the user-selected timezone using luxon
+          // Convert the UTC time from the server
           const utc = luxon.DateTime.fromISO(data.utc, { zone: "utc" });
-          const local = utc.setZone(tz);
-          serverTime = local.toMillis();
+          serverTime = utc.toMillis(); // keep UTC
         }
 
         // Calculate and save offset between server and local time
-        const localTime = Date.now();
-        timeOffset = serverTime - localTime;
+        timeOffset = serverTime - Date.now();
         localStorage.setItem("lastValidOffset", timeOffset);
         localStorage.setItem("lastUsedTimezone", tz);
         status.textContent = "Ω";
