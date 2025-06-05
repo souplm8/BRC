@@ -1,4 +1,4 @@
-# Local NTP Proxy Server
+# HTML BIG RED CLOCK with support fot timeapi.io and local NTP Proxy Server
 
 This Python script runs a local HTTP server that acts as a proxy to a real NTP server.  
 It allows browser-based clocks (like BRC.html) to synchronize time using HTTP requests, even when they cannot access NTP directly.
