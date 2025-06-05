@@ -186,6 +186,18 @@
       <option value="Pacific/Auckland">(UTC+12:00) Auckland</option>
     </select>
     <br>
+    <label for="timeSourceSelect">Time source:</label>
+    <select id="timeSourceSelect">
+      <option value="api">Public API (timeapi.io)</option>
+      <option value="ntp">Local time server</option>
+    </select>
+    <br>
+    <label for="ntpServerInput">NTP server address:</label>
+    <input type="text" id="ntpServerInput" placeholder="e.g. 192.168.1.100:8000" />
+    <br>
+    <label for="apiServerInput">API server address:</label>
+    <input type="text" id="apiServerInput" placeholder="e.g. https://timeapi.io" />
+    <br><br>
     <label class="switch">
       <input type="checkbox" id="toggleSyncIcon" checked>
       <span class="slider"></span>
@@ -198,7 +210,7 @@
     </label>
     <span>Help</span>
   </div>
-  <div id="timer-controls" style="position:fixed; top:120px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10; display:none; text-align: center;">
+  <div id="timer-controls" style="position:fixed; top:240px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10; display:none; text-align: center;">
     <div>
       <strong>Visibility and Activation</strong><br>
       <label class="switch">
@@ -254,12 +266,15 @@
   </div>
 
   <script>
+    // --- SVG Dots and Ticks Initialization ---
+    // Create SVG elements for the clock's second dots and minute ticks
     const svgDots = document.getElementById('dots');
     const svgTicks = document.getElementById('ticks');
     const radiusDots = 450;
     const radiusTicks = 480;
     const dots = [];
 
+    // Draw large ticks for every 5 minutes (12 ticks)
     for (let i = 0; i < 60; i += 5) {
       const angle = (i * 6) * Math.PI / 180;
       const x = radiusTicks * Math.cos(angle);
@@ -272,6 +287,7 @@
       svgTicks.appendChild(tick);
     }
 
+    // Draw 60 small dots for each second
     for (let i = 0; i < 60; i++) {
       const angle = (i * 6) * Math.PI / 180;
       const x = radiusDots * Math.cos(angle);
@@ -285,52 +301,53 @@
       dots.push(circle);
     }
 
-    // --- Deklaracje timerów i flag zakończenia ---
-    // Przesunięcie czasu względem serwera (synchronizacja)
+    // --- Time synchronization and timer variables ---
+    // Offset between local clock and synchronized server time (ms)
     let timeOffset = Number(localStorage.getItem("lastValidOffset")) || 0;
-    // Docelowe czasy zakończenia timerów (w ms od 1970)
+    // Target times for the three countdown timers (ms since epoch)
     let timer1Target = null;
     let timer2Target = null;
     let timer3Target = null;
-    // Flagi informujące, czy dany timer został zakończony
+    // Flags to track if each timer has finished
     let timer1Finished = false;
     let timer2Finished = false;
     let timer3Finished = false;
 
-    // --- Funkcja aktualizująca zegar oraz wizualizację timerów ---
+    // --- updateClock: Updates the main clock and timer displays ---
     function updateClock() {
-      // Oblicz aktualny czas z uwzględnieniem przesunięcia (synchronizacja)
+      // Calculate the synchronized current time
       const now = new Date(Date.now() + timeOffset);
-      // Formatowanie godzin, minut, sekund i części setnych sekundy
+      // Format hours, minutes, seconds, and centiseconds
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
       const milliseconds = String(now.getMilliseconds()).padStart(3, '0').slice(0,2);
-      // Wyświetlanie aktualnego czasu na głównym zegarze
+      // Update main clock UI
       document.getElementById("output").innerText = `${hours}:${minutes}:${seconds}.${milliseconds}`;
-      // Wyświetlanie daty
+      // Update date display
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
       document.getElementById("date").innerText = `${year}.${month}.${day}`;
-      // Aktualizacja kropek sekundowych na okręgu
+      // Update second dots: highlight dots up to current second
       const currentSecond = now.getSeconds();
       for (let i = 0; i < 60; i++) {
         dots[i].setAttribute("fill", i <= currentSecond ? "red" : "black");
       }
-      // Aktualny czas w ms (do obliczeń timerów)
+      // Get current time in ms for timer calculations
       const nowTime = now.getTime();
 
-      // --- Funkcja aktualizująca pojedynczy timer ---
-      // targetTime - docelowy czas zakończenia timera (ms)
-      // elementId - id elementu HTML, gdzie wyświetlić timer
-      // finishedFlagName - nazwa flagi zakończenia timera (string, np. "timer1Finished")
-      // isElapsed - czy wyświetlać czas od przekroczenia (nieużywane w głównym kodzie)
+      // --- updateTimer: update a single timer's UI and color ---
+      // Arguments:
+      //   targetTime: ms since epoch for timer finish
+      //   elementId: DOM id of timer display
+      //   finishedFlagName: global flag variable name (string)
+      //   isElapsed: if true, show elapsed time since finish (not used in main code)
       function updateTimer(targetTime, elementId, finishedFlagName, isElapsed = false) {
         const el = document.getElementById(elementId);
         if (!el) return;
         if (isElapsed) {
-          // Pokazuj czas, jaki upłynął od przekroczenia timera
+          // Show time elapsed since timer finished
           const elapsed = Math.max(0, nowTime - targetTime);
           const h = String(Math.floor(elapsed / 3600000));
           const m = String(Math.floor((elapsed % 3600000) / 60000)).padStart(2, '0');
@@ -340,36 +357,37 @@
           el.style.color = "aqua";
           return;
         }
-        // Różnica czasu do docelowego momentu
+        // Calculate time remaining to target
         let diff = targetTime - nowTime;
-        if (diff >= 0) diff += 1000; // Dodaj 1s, aby timer nie znikał za wcześnie
+        if (diff >= 0) diff += 1000; // Add 1s so timer doesn't disappear early
         let finished = window[finishedFlagName];
-        // Jeśli timer właśnie się zakończył, ustaw flagę zakończenia
+        // Set finished flag if timer just finished
         if (!finished && diff < 1000) {
           window[finishedFlagName] = true;
         }
-        // Formatowanie wyświetlanego czasu
+        // Format timer display string
         const absDiff = Math.abs(diff);
         const h = String(Math.floor(absDiff / 3600000));
         const m = String(Math.floor((absDiff % 3600000) / 60000)).padStart(2, '0');
         const secondsRaw = Math.floor((absDiff % 60000) / 1000);
         const s = secondsRaw === 60 ? '00' : String(secondsRaw).padStart(2, '0');
         el.innerText = `${diff < 0 ? '+' : '-'}${h}:${m}:${s}`;
-        // Kolorowanie w zależności od stanu timera
+        // Color logic: red (<5min), orange (<15min), white (future), lime (finished)
         if (diff > 0) {
           if (diff <= 5 * 60 * 1000) {
-            el.style.color = "red"; // mniej niż 5 minut DO zdarzenia
+            el.style.color = "red";
           } else if (diff <= 15 * 60 * 1000) {
             el.style.color = "orange";
           } else {
             el.style.color = "white";
           }
         } else {
-          el.style.color = "lime"; // zdarzenie już minęło
+          el.style.color = "lime";
         }
       }
 
-      // --- Aktualizacja wyświetlania timerów (widoczność, aktywacja) ---
+      // --- Timer visibility and activation logic ---
+      // Show/hide and update each timer based on controls and state
       if (timer1Target !== null && document.getElementById("enableTimer1").checked && !document.getElementById("hideTimer1").checked) {
         const el = document.getElementById("timer1");
         if (el) el.style.display = "block";
@@ -402,15 +420,40 @@
       }
     }
 
+    // --- synchronizeTime: Fetches time from API or local NTP proxy and sets timeOffset ---
     async function synchronizeTime() {
       const status = document.getElementById("sync-status");
+      const source = document.getElementById("timeSourceSelect").value;
+      const timezoneSelect = document.getElementById("timezoneSelect");
+      const tz = timezoneSelect.value || "Europe/Warsaw";
+
       try {
-        const timezoneSelect = document.getElementById("timezoneSelect");
-        const tz = timezoneSelect.value || "Europe/Warsaw";
-        const response = await fetch(`https://timeapi.io/api/Time/current/zone?timeZone=${tz}`);
-        if (!response.ok) throw new Error("Błąd pobierania czasu");
-        const data = await response.json();
-        const serverTime = new Date(data.dateTime).getTime();
+        let serverTime;
+
+        if (source === "api") {
+          // Use public API (timeapi.io) for time synchronization
+          let apiBase = document.getElementById("apiServerInput").value.trim();
+          if (!apiBase || apiBase.includes("/api/Time/")) {
+            apiBase = "https://timeapi.io";
+          }
+          const response = await fetch(`${apiBase}/api/Time/current/zone?timeZone=${tz}`);
+          if (!response.ok) throw new Error("API time fetch error");
+          const data = await response.json();
+          serverTime = new Date(data.dateTime).getTime();
+        } else if (source === "ntp") {
+          // Use local NTP proxy server for time synchronization
+          const ntpAddr = document.getElementById("ntpServerInput").value.trim();
+          if (!ntpAddr) throw new Error("No NTP server address set");
+          const apiAddr = document.getElementById("apiServerInput").value.trim();
+          if (!apiAddr) throw new Error("No API server address set");
+
+          const response = await fetch(`http://${apiAddr}/api/time?ntp=${ntpAddr}`);
+          if (!response.ok) throw new Error("Local time fetch error");
+          const data = await response.json();
+          serverTime = new Date(data.utc).getTime();
+        }
+
+        // Calculate and save offset between server and local time
         const localTime = Date.now();
         timeOffset = serverTime - localTime;
         localStorage.setItem("lastValidOffset", timeOffset);
@@ -418,17 +461,20 @@
         status.textContent = "Ω";
         status.className = "ok";
       } catch (err) {
-        console.error("Synchronizacja czasu nie powiodła się:", err);
+        // Show error if time sync fails
+        console.error("Time sync failed:", err);
         status.textContent = "Ω";
         status.className = "error";
       }
     }
 
-    setInterval(updateClock, 10);
+    // --- Timer and clock update intervals ---
+    setInterval(updateClock, 10); // Update clock every 10ms for smooth UI
     updateClock();
     synchronizeTime();
-    setInterval(synchronizeTime, 300000);
+    setInterval(synchronizeTime, 300000); // Resync every 5 minutes
 
+    // --- scaleToFitWindow: Scale the clock to fit the browser window ---
     function scaleToFitWindow() {
       const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1080);
       const wrapper = document.getElementById('wrapper');
@@ -439,6 +485,7 @@
     window.addEventListener('resize', scaleToFitWindow);
     scaleToFitWindow();
 
+    // --- DOM elements for controls and output ---
     const offsetControls = document.getElementById("offset-controls");
     const timerControls = document.getElementById("timer-controls");
     const output = document.getElementById("output");
@@ -446,6 +493,7 @@
     const toggleSyncIcon = document.getElementById("toggleSyncIcon");
     const timezoneSelect = document.getElementById("timezoneSelect");
 
+    // --- Timezone and time source selector logic ---
     function initializeTimezone() {
       const savedTz = localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
       timezoneSelect.value = savedTz;
@@ -453,9 +501,33 @@
         localStorage.setItem("lastUsedTimezone", timezoneSelect.value);
         synchronizeTime();
       });
+      const timeSourceSelect = document.getElementById("timeSourceSelect");
+      const ntpInput = document.getElementById("ntpServerInput");
+      const apiInput = document.getElementById("apiServerInput");
+
+      timeSourceSelect.value = localStorage.getItem("timeSource") || "api";
+      ntpInput.value = localStorage.getItem("ntpServer") || "";
+      apiInput.value = localStorage.getItem("apiServer") || "https://timeapi.io";
+      apiInput.dispatchEvent(new Event('change'));
+
+      // Save and re-sync when user changes time source or server addresses
+      timeSourceSelect.addEventListener("change", () => {
+        localStorage.setItem("timeSource", timeSourceSelect.value);
+        synchronizeTime();
+      });
+      ntpInput.addEventListener("change", () => {
+        localStorage.setItem("ntpServer", ntpInput.value);
+        synchronizeTime();
+      });
+      apiInput.addEventListener("change", () => {
+        localStorage.setItem("apiServer", apiInput.value);
+        synchronizeTime();
+      });
     }
 
     initializeTimezone();
+
+    // --- DOM interaction: Show/hide sync icon, help/about, and control panels ---
     syncStatus.style.display = toggleSyncIcon.checked ? "block" : "none";
     toggleSyncIcon.addEventListener("change", () => {
       syncStatus.style.display = toggleSyncIcon.checked ? "block" : "none";
@@ -469,6 +541,7 @@
         });
       }
     });
+    // Toggle display of control panels when clicking the main clock
     output.addEventListener("click", () => {
       if (offsetControls.style.display === "none") {
         offsetControls.style.display = "block";
@@ -479,7 +552,7 @@
       }
     });
 
-    // --- Ustawianie timerów na podstawie pól formularza ---
+    // --- Timer control logic: set and reset timers based on form inputs ---
     document.getElementById("setTimers").addEventListener("click", () => {
       const c1 = document.getElementById("timer1Input").value;
       const c2 = document.getElementById("timer2Input").value;
@@ -494,7 +567,7 @@
       timer3Finished = false;
     });
 
-    // --- Resetowanie wszystkich timerów ---
+    // Reset all timers
     document.getElementById("resetTimers").addEventListener("click", () => {
       timer1Target = null;
       timer2Target = null;
@@ -507,7 +580,7 @@
       document.getElementById("timer3").innerText = "";
     });
 
-    // --- Resetowanie pojedynczych timerów ---
+    // Reset individual timers
     document.getElementById("resetTimer1").addEventListener("click", () => {
       timer1Target = null;
       timer1Finished = false;
@@ -526,7 +599,7 @@
   </script>
 </div>
 
-  <div id="about" style="position:fixed; bottom:20px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10; display:none;">
+  <div id="about" style="position:fixed; bottom:20px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10; display:none; text-align: center;">
     <strong>About BIG RED CLOCK</strong>
     <p>
       This fullscreen clock shows the current time with millisecond precision, a date, and up to three countdown timers.
@@ -536,13 +609,16 @@
       <li>Use the timezone selector to sync with a preferred region.</li>
       <li>Each timer can be enabled, hidden, set to a target date/time, or reset individually or all at once.</li>
       <li>Timers turn red when under 5 minutes remaining, orange under 15 minutes, and green after time has passed.</li>
-      <li>The Ω symbol indicates time synchronization status: green = synced, yellow = failed.</li>
+      <li>The Ω symbol shows whether time is synchronized: green = synced, yellow = failed.</li>
     </ul>
     <p>
       <strong>Logo file:</strong> Place a file named <code>logo.png</code> inside the <code>media/</code> folder.<br>
       <strong>Font file:</strong> Place the file <code>NimbusSanL-Reg.otf</code> inside the <code>font/</code> folder.<br>
       <strong>Time sync API:</strong> The clock synchronizes time using the public endpoint <code>https://timeapi.io</code>.
     </p>
+    <div style="font-size: 0.75em; margin-top: 10px;">
+      This project uses the <em>Nimbus Sans L</em> font, licensed under the GNU General Public License v2.0 (GPL-2.0).
+    </div>
   </div>
 </body>
 </html>
