@@ -332,11 +332,12 @@
       const day = String(localNow.day).padStart(2, '0');
       document.getElementById("date").innerText = `${year}.${month}.${day}`;
       // Update second dots: highlight dots up to current second
-      const currentSecond = now.getSeconds();
+      const currentSecond = localNow.second;
       for (let i = 0; i < 60; i++) {
         dots[i].setAttribute("fill", i <= currentSecond ? "red" : "black");
       }
       // Get current time in ms for timer calculations
+      const now = new Date();
       const nowTime = now.getTime();
 
       // --- updateTimer: update a single timer's UI and color ---
