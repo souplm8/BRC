@@ -23,22 +23,23 @@ DEFAULT_NTP_PORT = 123
 class TimeHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         # Handle GET requests for the /api/time endpoint
-        if self.path.startswith("/api/time"):
+        from urllib.parse import urlparse, parse_qs
+        parsed_url = urlparse(self.path)
+        if parsed_url.path == "/api/time":
             try:
-                from urllib.parse import urlparse, parse_qs
-
                 # Parse query parameters to determine NTP server and port
-                parsed_url = urlparse(self.path)
                 query_params = parse_qs(parsed_url.query)
-
                 ntp_param = query_params.get("ntp", [f"{DEFAULT_NTP_SERVER}:{DEFAULT_NTP_PORT}"])[0]
                 if ":" in ntp_param:
                     ntp_host, ntp_port = ntp_param.split(":", 1)
-                    ntp_port = int(ntp_port)
+                    ntp_host = ntp_host.strip()
+                    try:
+                        ntp_port = int(ntp_port)
+                    except Exception:
+                        raise ValueError("Invalid NTP port")
                 else:
-                    ntp_host = ntp_param
+                    ntp_host = ntp_param.strip()
                     ntp_port = DEFAULT_NTP_PORT
-
                 # Query the NTP server for current time
                 client = ntplib.NTPClient()
                 response = client.request(ntp_host, port=ntp_port, version=3)
@@ -60,20 +61,27 @@ class TimeHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(error_json).encode())
         else:
             # Respond with 404 for any other endpoint
-            self.send_error(404)
+            self.send_response(404)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            error_json = {"error": "Not found"}
+            self.wfile.write(json.dumps(error_json).encode())
 
 
 #
 # Get the local IP address of the machine (used for displaying the server URL).
 #
 def get_local_ip():
+    # Returns the local IP address used for outbound connections (not 127.0.0.1)
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Use a public IP to determine the outbound interface, doesn't send packets
         s.connect(("8.8.8.8", 80))
         ip = s.getsockname()[0]
         s.close()
         return ip
-    except:
+    except Exception:
         return "127.0.0.1"
 
 #
@@ -86,13 +94,6 @@ def run_server():
     print(f"NTP Time Proxy running on http://{ip}:15151/")
     print(f"Using NTP server: {DEFAULT_NTP_SERVER}:{DEFAULT_NTP_PORT}")
     print("Press Ctrl+C to stop the server.")
-    def serve():
-        try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            pass
-    t = threading.Thread(target=serve)
-    t.start()
 
     def shutdown_server(signum, frame):
         print("\nShutting down server...")
@@ -100,7 +101,10 @@ def run_server():
         sys.exit(0)
 
     signal.signal(signal.SIGINT, shutdown_server)
-    signal.pause()
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        shutdown_server(None, None)
 
 # Entry point: starts the server when the script is run directly.
 if __name__ == "__main__":
