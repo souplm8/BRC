@@ -267,6 +267,7 @@
   </div>
 
   <script>
+    document.addEventListener("DOMContentLoaded", function () {
     // --- SVG Dots and Ticks Initialization ---
     // Create SVG elements for the clock's second dots and minute ticks
     const svgDots = document.getElementById('dots');
@@ -548,7 +549,9 @@
       }
     });
     // Toggle display of control panels when clicking the main clock
-    output.addEventListener("click", () => {
+    document.getElementById("output").addEventListener("click", () => {
+      const offsetControls = document.getElementById("offset-controls");
+      const timerControls = document.getElementById("timer-controls");
       if (offsetControls.style.display === "none") {
         offsetControls.style.display = "block";
         timerControls.style.display = "block";
@@ -602,6 +605,7 @@
       timer3Finished = false;
       document.getElementById("timer3").innerText = "";
     });
+    }); // End of DOMContentLoaded
   </script>
 </div>
 
