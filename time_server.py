@@ -91,9 +91,19 @@ def run_server():
     server_address = ("0.0.0.0", 15151)
     httpd = HTTPServer(server_address, TimeHandler)
     ip = get_local_ip()
+
     print(f"NTP Time Proxy running on http://{ip}:15151/")
     print(f"Using NTP server: {DEFAULT_NTP_SERVER}:{DEFAULT_NTP_PORT}")
     print("Press Ctrl+C to stop the server.")
+
+    def serve():
+        try:
+            httpd.serve_forever()
+        except Exception as e:
+            print(f"Server error: {e}")
+
+    server_thread = threading.Thread(target=serve, daemon=True)
+    server_thread.start()
 
     def shutdown_server(signum, frame):
         print("\nShutting down server...")
@@ -101,10 +111,10 @@ def run_server():
         sys.exit(0)
 
     signal.signal(signal.SIGINT, shutdown_server)
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        shutdown_server(None, None)
+    signal.signal(signal.SIGTERM, shutdown_server)
+
+    # Wait for the thread to finish (until shutdown is called)
+    server_thread.join()
 
 # Entry point: starts the server when the script is run directly.
 if __name__ == "__main__":
