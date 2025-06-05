@@ -431,11 +431,8 @@
         let serverTime;
 
         if (source === "api") {
-          // Use public API (timeapi.io) for time synchronization
-          let apiBase = document.getElementById("apiServerInput").value.trim();
-          if (!apiBase || apiBase.includes("/api/Time/")) {
-            apiBase = "https://timeapi.io";
-          }
+          // Always use public API (timeapi.io) for time synchronization
+          let apiBase = "https://timeapi.io";
           const response = await fetch(`${apiBase}/api/Time/current/zone?timeZone=${tz}`);
           if (!response.ok) throw new Error("API time fetch error");
           const data = await response.json();
