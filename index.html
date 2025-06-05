@@ -460,6 +460,7 @@
         // Calculate and save offset between server and local time
         timeOffset = serverTime - Date.now();
         localStorage.setItem("lastValidOffset", timeOffset);
+        updateClock(); // Force clock update after new offset
         localStorage.setItem("lastUsedTimezone", tz);
         status.textContent = "Ω";
         status.className = "ok";
@@ -503,6 +504,7 @@
       timezoneSelect.addEventListener("change", () => {
         localStorage.setItem("lastUsedTimezone", timezoneSelect.value);
         synchronizeTime();
+        updateClock(); // Force update on timezone change
       });
       const timeSourceSelect = document.getElementById("timeSourceSelect");
       const ntpInput = document.getElementById("ntpServerInput");
