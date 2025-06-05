@@ -132,6 +132,7 @@
       left: 0;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 </head>
 <body>
   <div id="wrapper">
@@ -450,7 +451,10 @@
           const response = await fetch(`http://${apiAddr}/api/time?ntp=${ntpAddr}`);
           if (!response.ok) throw new Error("Local time fetch error");
           const data = await response.json();
-          serverTime = new Date(data.utc).getTime();
+          // Convert the UTC time from the server into the user-selected timezone using luxon
+          const utc = luxon.DateTime.fromISO(data.utc, { zone: "utc" });
+          const local = utc.setZone(tz);
+          serverTime = local.toMillis();
         }
 
         // Calculate and save offset between server and local time
