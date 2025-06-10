@@ -539,15 +539,13 @@
     toggleSyncIcon.addEventListener("change", () => {
       syncStatus.style.display = toggleSyncIcon.checked ? "block" : "none";
     });
-    document.addEventListener("DOMContentLoaded", () => {
-      const toggleAbout = document.getElementById("toggleAbout");
-      const aboutBox = document.getElementById("about");
-      if (toggleAbout && aboutBox) {
-        toggleAbout.addEventListener("change", () => {
-          aboutBox.style.display = toggleAbout.checked ? "block" : "none";
-        });
-      }
-    });
+    const toggleAbout = document.getElementById("toggleAbout");
+    const aboutBox = document.getElementById("about");
+    if (toggleAbout && aboutBox) {
+      toggleAbout.addEventListener("change", () => {
+        aboutBox.style.display = toggleAbout.checked ? "block" : "none";
+      });
+    }
     // Toggle display of control panels when clicking the main clock
     document.getElementById("output").addEventListener("click", () => {
       const offsetControls = document.getElementById("offset-controls");
