@@ -68,7 +68,7 @@
       left: 50%;
       transform: translate(-50%, -50%);
       font-family: 'NimbusSansL', sans-serif;
-      font-size: 40px;
+      font-size: 60px;
       color: white;
     }
     svg {
@@ -86,6 +86,8 @@
       text-align: center;
       color: red;
       cursor: pointer;
+      z-index: 1002; /* zwiększono z 1001 do 1002 */
+      pointer-events: auto;
     }
     #date {
       position: fixed;
@@ -146,7 +148,8 @@
     <div id="date"></div>
     <div id="timer1" class="timer" style="top:15%;"></div>
     <div id="timer2" class="timer" style="top:21%;"></div>
-    <div id="timer3" class="timer" style="top:27%;"></div>
+    <div id="timer3" class="timer" style="top:79%;"></div>
+    <div id="timer4" class="timer" style="top:85%;"></div>
     <div id="sync-status"></div>
   </div>
 
@@ -206,6 +209,12 @@
     <span>Show sync icon</span>
     <br>
     <label class="switch">
+      <input type="checkbox" id="minimalMode">
+      <span class="slider"></span>
+    </label>
+    <span>Tryb prosty (zegar + timery, bez grafiki)</span>
+    <br>
+    <label class="switch">
       <input type="checkbox" id="toggleAbout">
       <span class="slider"></span>
     </label>
@@ -230,6 +239,11 @@
       </label>
       <span>Enable Timer 3</span><br>
       <label class="switch">
+        <input type="checkbox" id="enableTimer4" checked>
+        <span class="slider"></span>
+      </label>
+      <span>Enable Timer 4</span><br>
+      <label class="switch">
         <input type="checkbox" id="hideTimer1">
         <span class="slider"></span>
       </label>
@@ -243,7 +257,12 @@
         <input type="checkbox" id="hideTimer3">
         <span class="slider"></span>
       </label>
-      <span>Hide Timer 3</span>
+      <span>Hide Timer 3</span><br>
+      <label class="switch">
+        <input type="checkbox" id="hideTimer4">
+        <span class="slider"></span>
+      </label>
+      <span>Hide Timer 4</span>
     </div>
     <hr>
     <div>
@@ -253,7 +272,9 @@
       <label for="timer2Input">Timer 2 (date and time):</label><br>
       <input type="datetime-local" id="timer2Input"><br>
       <label for="timer3Input">Timer 3 (date and time):</label><br>
-      <input type="datetime-local" id="timer3Input">
+      <input type="datetime-local" id="timer3Input"><br>
+      <label for="timer4Input">Timer 4 (date and time):</label><br>
+      <input type="datetime-local" id="timer4Input">
     </div>
     <hr>
     <div>
@@ -262,7 +283,8 @@
       <button id="resetTimers">Reset All Timers</button><br><br>
       <button id="resetTimer1">Reset Timer 1</button><br>
       <button id="resetTimer2">Reset Timer 2</button><br>
-      <button id="resetTimer3">Reset Timer 3</button>
+      <button id="resetTimer3">Reset Timer 3</button><br>
+      <button id="resetTimer4">Reset Timer 4</button>
     </div>
   </div>
 
@@ -310,88 +332,80 @@
     let timer1Target = null;
     let timer2Target = null;
     let timer3Target = null;
+    let timer4Target = null;
     // Flags to track if each timer has finished
     let timer1Finished = false;
     let timer2Finished = false;
     let timer3Finished = false;
+    let timer4Finished = false;
+    let lastSecond = -1;
+
+    // --- Global helper: parse datetime-local input in the selected timezone to UTC millis ---
+    window.toTargetUtcMillis = function(inputId) {
+      const iso = document.getElementById(inputId).value; // "YYYY-MM-DDTHH:mm"
+      if (!iso) return null;
+      const tz = localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
+      return luxon.DateTime.fromISO(iso, { zone: tz }).toUTC().toMillis();
+    };
 
     // --- updateClock: Updates the main clock and timer displays ---
     function updateClock() {
       const tz = localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
-      const utcNow = Date.now() + timeOffset;
-      const localNow = luxon.DateTime.fromMillis(utcNow, { zone: "utc" }).setZone(tz);
+      const nowUtc = Date.now() + timeOffset;
+      const localNow = luxon.DateTime.fromMillis(nowUtc, { zone: "utc" }).setZone(tz);
 
       const hours = String(localNow.hour).padStart(2, '0');
       const minutes = String(localNow.minute).padStart(2, '0');
       const seconds = String(localNow.second).padStart(2, '0');
-      const milliseconds = String(localNow.millisecond).padStart(3, '0').slice(0,2);
+      const centiseconds = String(Math.floor(localNow.millisecond / 10)).padStart(2, '0');
 
-      document.getElementById("output").innerText = `${hours}:${minutes}:${seconds}.${milliseconds}`;
+      document.getElementById("output").innerText = `${hours}:${minutes}:${seconds}.${centiseconds}`;
 
       const year = localNow.year;
       const month = String(localNow.month).padStart(2, '0');
       const day = String(localNow.day).padStart(2, '0');
       document.getElementById("date").innerText = `${year}.${month}.${day}`;
-      // Update second dots: highlight dots up to current second
-      const currentSecond = localNow.second;
-      for (let i = 0; i < 60; i++) {
-        dots[i].setAttribute("fill", i <= currentSecond ? "red" : "black");
-      }
-      // Get current time in ms for timer calculations
-      const now = new Date();
-      const nowTime = now.getTime();
 
-      // --- updateTimer: update a single timer's UI and color ---
-      // Arguments:
-      //   targetTime: ms since epoch for timer finish
-      //   elementId: DOM id of timer display
-      //   finishedFlagName: global flag variable name (string)
-      //   isElapsed: if true, show elapsed time since finish (not used in main code)
-      function updateTimer(targetTime, elementId, finishedFlagName, isElapsed = false) {
+      // Update second dots only when the second changes
+      if (localNow.second !== lastSecond) {
+        for (let i = 0; i < 60; i++) {
+          dots[i].setAttribute("fill", i <= localNow.second ? "red" : "black");
+        }
+        lastSecond = localNow.second;
+      }
+
+      // --- updateTimer helper using synced UTC ---
+      function updateTimer(targetUtc, elementId, finishedFlagName) {
         const el = document.getElementById(elementId);
-        if (!el) return;
-        if (isElapsed) {
-          // Show time elapsed since timer finished
-          const elapsed = Math.max(0, nowTime - targetTime);
-          const h = String(Math.floor(elapsed / 3600000));
-          const m = String(Math.floor((elapsed % 3600000) / 60000)).padStart(2, '0');
-          const secondsRaw = Math.floor((elapsed % 60000) / 1000);
-          const s = secondsRaw === 60 ? '00' : String(secondsRaw).padStart(2, '0');
-          el.innerText = `+${h}:${m}:${s}`;
-          el.style.color = "aqua";
-          return;
-        }
-        // Calculate time remaining to target
-        let diff = targetTime - nowTime;
-        if (diff >= 0) diff += 1000; // Add 1s so timer doesn't disappear early
-        let finished = window[finishedFlagName];
-        // Set finished flag if timer just finished
-        if (!finished && diff < 1000) {
-          window[finishedFlagName] = true;
-        }
-        // Format timer display string
-        const absDiff = Math.abs(diff);
-        const h = String(Math.floor(absDiff / 3600000));
-        const m = String(Math.floor((absDiff % 3600000) / 60000)).padStart(2, '0');
-        const secondsRaw = Math.floor((absDiff % 60000) / 1000);
-        const s = secondsRaw === 60 ? '00' : String(secondsRaw).padStart(2, '0');
-        el.innerText = `${diff < 0 ? '+' : '-'}${h}:${m}:${s}`;
-        // Color logic: red (<5min), orange (<15min), white (future), lime (finished)
-        if (diff > 0) {
-          if (diff <= 5 * 60 * 1000) {
+        if (!el || targetUtc == null) return;
+
+        let diff = targetUtc - nowUtc; // diff relative to synced UTC time
+        const isFuture = diff > 0;
+        const abs = Math.abs(diff);
+
+        // Avoid showing :60 by using ceil for future, floor for past
+        const totalSec = isFuture ? Math.ceil(abs / 1000) : Math.floor(abs / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+
+        el.innerText = `${isFuture ? '-' : '+'}${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+        if (isFuture) {
+          if (abs <= 5 * 60 * 1000) {
             el.style.color = "red";
-          } else if (diff <= 15 * 60 * 1000) {
+          } else if (abs <= 15 * 60 * 1000) {
             el.style.color = "orange";
           } else {
             el.style.color = "white";
           }
         } else {
           el.style.color = "lime";
+          if (!window[finishedFlagName]) window[finishedFlagName] = true;
         }
       }
 
       // --- Timer visibility and activation logic ---
-      // Show/hide and update each timer based on controls and state
       if (timer1Target !== null && document.getElementById("enableTimer1").checked && !document.getElementById("hideTimer1").checked) {
         const el = document.getElementById("timer1");
         if (el) el.style.display = "block";
@@ -422,6 +436,17 @@
         t3.style.color = "white";
         t3.style.display = "none";
       }
+      if (timer4Target !== null && document.getElementById("enableTimer4").checked && !document.getElementById("hideTimer4").checked) {
+        const el = document.getElementById("timer4");
+        if (el) el.style.display = "block";
+        updateTimer(timer4Target, "timer4", "timer4Finished");
+      } else {
+        const t4 = document.getElementById("timer4");
+        t4.innerText = "";
+        t4.style.color = "white";
+        t4.style.display = "none";
+      }
+      applyLayout();
     }
 
     // --- synchronizeTime: Fetches time from API or local NTP proxy and sets timeOffset ---
@@ -430,17 +455,16 @@
       const source = document.getElementById("timeSourceSelect").value;
       const timezoneSelect = document.getElementById("timezoneSelect");
       const tz = timezoneSelect.value || "Europe/Warsaw";
+      const minimalModeCheckbox = document.getElementById("minimalMode");
 
       try {
         let serverTime;
 
         if (source === "api") {
-          // Always use public API (timeapi.io) for time synchronization
-          let apiBase = "https://timeapi.io";
-          // Force API server input to the default and override localStorage
-          document.getElementById("apiServerInput").value = apiBase;
+          // Use configured API base or default
+          let apiBase = document.getElementById("apiServerInput").value.trim() || localStorage.getItem("apiServer") || "https://timeapi.io";
           localStorage.setItem("apiServer", apiBase);
-          const response = await fetch(`${apiBase}/api/Time/current/zone?timeZone=${tz}`);
+          const response = await fetch(`${apiBase}/api/Time/current/zone?timeZone=${encodeURIComponent(tz)}`);
           if (!response.ok) throw new Error("API time fetch error");
           const data = await response.json();
           serverTime = new Date(data.dateTime).getTime();
@@ -448,10 +472,12 @@
           // Use local NTP proxy server for time synchronization
           const ntpAddr = document.getElementById("ntpServerInput").value.trim();
           if (!ntpAddr) throw new Error("No NTP server address set");
-          const apiAddr = document.getElementById("apiServerInput").value.trim();
-          if (!apiAddr) throw new Error("No API server address set");
 
-          const response = await fetch(`http://${apiAddr}/api/time?ntp=${ntpAddr}`);
+          const base = document.getElementById("apiServerInput").value.trim();
+          if (!base) throw new Error("No API server address set");
+          if (!/^https?:\/\//i.test(base)) throw new Error("API server must include http(s)://");
+
+          const response = await fetch(`${base}/api/time?ntp=${encodeURIComponent(ntpAddr)}`);
           if (!response.ok) throw new Error("Local time fetch error");
           const data = await response.json();
           // Convert the UTC time from the server
@@ -462,8 +488,8 @@
         // Calculate and save offset between server and local time
         timeOffset = serverTime - Date.now();
         localStorage.setItem("lastValidOffset", timeOffset);
-        updateClock(); // Force clock update after new offset
         localStorage.setItem("lastUsedTimezone", tz);
+        updateClock(); // Force clock update after new offset
         status.textContent = "Ω";
         status.className = "ok";
       } catch (err) {
@@ -475,8 +501,11 @@
     }
 
     // --- Timer and clock update intervals ---
-    setInterval(updateClock, 10); // Update clock every 10ms for smooth UI
-    updateClock();
+    function loop() {
+      updateClock();
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
     synchronizeTime();
     setInterval(synchronizeTime, 300000); // Resync every 5 minutes
 
@@ -493,11 +522,23 @@
 
     // --- DOM elements for controls and output ---
     const offsetControls = document.getElementById("offset-controls");
+    const minimalModeCheckbox = document.getElementById("minimalMode");
     const timerControls = document.getElementById("timer-controls");
     const output = document.getElementById("output");
     const syncStatus = document.getElementById("sync-status");
     const toggleSyncIcon = document.getElementById("toggleSyncIcon");
     const timezoneSelect = document.getElementById("timezoneSelect");
+
+    // --- Output click: toggle controls ---
+    output.addEventListener("click", () => {
+      const offsetControls = document.getElementById("offset-controls");
+      const timerControls = document.getElementById("timer-controls");
+      if (offsetControls && timerControls) {
+        const isVisible = offsetControls.style.display === "block";
+        offsetControls.style.display = isVisible ? "none" : "block";
+        timerControls.style.display = isVisible ? "none" : "block";
+      }
+    });
 
     // --- Timezone and time source selector logic ---
     function initializeTimezone() {
@@ -515,7 +556,8 @@
       timeSourceSelect.value = localStorage.getItem("timeSource") || "api";
       ntpInput.value = localStorage.getItem("ntpServer") || "";
       apiInput.value = localStorage.getItem("apiServer") || "https://timeapi.io";
-      apiInput.dispatchEvent(new Event('change'));
+      //apiInput.dispatchEvent(new Event('change'));
+
 
       // Save and re-sync when user changes time source or server addresses
       timeSourceSelect.addEventListener("change", () => {
@@ -533,7 +575,15 @@
     }
 
     initializeTimezone();
+    applyLayout();
 
+    // --- Minimal mode init ---
+const savedMinimal = localStorage.getItem("minimalMode") === "1";
+if (minimalModeCheckbox) minimalModeCheckbox.checked = savedMinimal;
+if (minimalModeCheckbox) minimalModeCheckbox.addEventListener("change", () => {
+  localStorage.setItem("minimalMode", minimalModeCheckbox.checked ? "1" : "0");
+  applyLayout();
+});
     // --- DOM interaction: Show/hide sync icon, help/about, and control panels ---
     syncStatus.style.display = toggleSyncIcon.checked ? "block" : "none";
     toggleSyncIcon.addEventListener("change", () => {
@@ -547,31 +597,123 @@
       });
     }
     // Toggle display of control panels when clicking the main clock
-    document.getElementById("output").addEventListener("click", () => {
-      const offsetControls = document.getElementById("offset-controls");
-      const timerControls = document.getElementById("timer-controls");
-      if (offsetControls.style.display === "none") {
-        offsetControls.style.display = "block";
-        timerControls.style.display = "block";
-      } else {
-        offsetControls.style.display = "none";
-        timerControls.style.display = "none";
-      }
-    });
+    // (handled above with output.addEventListener)
+    // --- Layout management for simple (minimal) mode ---
+function getVisibleTimerIds() {
+  const ids = [];
+  if (timer1Target !== null && document.getElementById("enableTimer1").checked && !document.getElementById("hideTimer1").checked) ids.push("timer1");
+  if (timer2Target !== null && document.getElementById("enableTimer2").checked && !document.getElementById("hideTimer2").checked) ids.push("timer2");
+  if (timer3Target !== null && document.getElementById("enableTimer3").checked && !document.getElementById("hideTimer3").checked) ids.push("timer3");
+  if (timer4Target !== null && document.getElementById("enableTimer4").checked && !document.getElementById("hideTimer4").checked) ids.push("timer4");
+  return ids;
+}
 
+function computeBestFontSize(ids, maxWidth) {
+  const samples = ids.map(id => id === 'output' ? '88:88:88.88' : '-8888:88:88');
+  const weights = ids.map(id => id === 'output' ? 'bold' : 'normal');
+  let measurer = document.getElementById('fit-measurer');
+  if (!measurer) {
+    measurer = document.createElement('div');
+    measurer.id = 'fit-measurer';
+    measurer.style.position = 'absolute';
+    measurer.style.left = '-99999px';
+    measurer.style.top = '0';
+    measurer.style.whiteSpace = 'nowrap';
+    measurer.style.visibility = 'hidden';
+    document.body.appendChild(measurer);
+  }
+
+  const fits = (size) => {
+    let maxW = 0;
+    for (let i = 0; i < ids.length; i++) {
+      measurer.style.fontFamily = "'NimbusSansL', sans-serif";
+      measurer.style.fontWeight = weights[i];
+      measurer.style.fontSize = size + 'px';
+      measurer.textContent = samples[i];
+      const w = measurer.scrollWidth;
+      if (w > maxW) maxW = w;
+    }
+    return maxW <= maxWidth;
+  };
+
+  let lo = 40, hi = 300;
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi + 1) / 2);
+    if (fits(mid)) {
+      lo = mid;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return lo;
+}
+
+function applyDefaultLayout() {
+  const svgEl = document.querySelector('#wrapper svg');
+  if (svgEl) svgEl.style.display = 'block';
+
+  const out = document.getElementById('output');
+  out.style.top = '50%';
+  out.style.fontSize = '120px';
+
+  const dateEl = document.getElementById('date');
+  dateEl.style.top = '60%';
+  dateEl.style.fontSize = '50px';
+
+  const t1 = document.getElementById('timer1'); if (t1) { t1.style.top = '15%'; t1.style.fontSize = '60px'; }
+  const t2 = document.getElementById('timer2'); if (t2) { t2.style.top = '21%'; t2.style.fontSize = '60px'; }
+  const t3 = document.getElementById('timer3'); if (t3) { t3.style.top = '79%'; t3.style.fontSize = '60px'; }
+  const t4 = document.getElementById('timer4'); if (t4) { t4.style.top = '85%'; t4.style.fontSize = '60px'; }
+}
+
+function applyMinimalLayout() {
+  const svgEl = document.querySelector('#wrapper svg');
+  if (svgEl) svgEl.style.display = 'none';
+
+  const timerIds = getVisibleTimerIds();
+  const ids = [...timerIds, 'output', 'date'];
+  const key = 'minimal|' + ids.join(',');
+
+  if (window.__layoutCacheKey !== key) {
+    const fontPx = computeBestFontSize(ids, 1020);
+    window.__layoutCacheKey = key;
+    window.__layoutCacheSize = fontPx;
+  }
+  const fontPx = window.__layoutCacheSize || 150;
+
+  const totalElements = ids.length;
+  const baseCenter = 50;
+  const spacing = 15; // zwiększono odstęp pionowy między elementami
+  const totalHeight = spacing * (totalElements - 1);
+  const startY = baseCenter - totalHeight / 2;
+
+  ids.forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.top = `${startY + spacing * idx}%`;
+    el.style.fontSize = id === 'date' ? '45px' : fontPx + 'px';
+    el.style.display = 'block';
+  });
+}
+
+function applyLayout() {
+  const minimal = minimalModeCheckbox && minimalModeCheckbox.checked;
+  if (minimal) applyMinimalLayout(); else applyDefaultLayout();
+}
     // --- Timer control logic: set and reset timers based on form inputs ---
     document.getElementById("setTimers").addEventListener("click", () => {
-      const c1 = document.getElementById("timer1Input").value;
-      const c2 = document.getElementById("timer2Input").value;
-      const c3 = document.getElementById("timer3Input").value;
-
-      timer1Target = c1 ? new Date(c1).getTime() : null;
-      timer2Target = c2 ? new Date(c2).getTime() : null;
-      timer3Target = c3 ? new Date(c3).getTime() : null;
+      timer1Target = toTargetUtcMillis("timer1Input");
+      timer2Target = toTargetUtcMillis("timer2Input");
+      timer3Target = toTargetUtcMillis("timer3Input");
+      timer4Target = toTargetUtcMillis("timer4Input");
 
       timer1Finished = false;
       timer2Finished = false;
       timer3Finished = false;
+      timer4Finished = false;
+
+      updateClock(); // To natychmiast pokaże aktywne timery
+      applyLayout();
     });
 
     // Reset all timers
@@ -579,12 +721,15 @@
       timer1Target = null;
       timer2Target = null;
       timer3Target = null;
+      timer4Target = null;
       timer1Finished = false;
       timer2Finished = false;
       timer3Finished = false;
+      timer4Finished = false;
       document.getElementById("timer1").innerText = "";
       document.getElementById("timer2").innerText = "";
       document.getElementById("timer3").innerText = "";
+      document.getElementById("timer4").innerText = "";
     });
 
     // Reset individual timers
@@ -603,6 +748,11 @@
       timer3Finished = false;
       document.getElementById("timer3").innerText = "";
     });
+    document.getElementById("resetTimer4").addEventListener("click", () => {
+      timer4Target = null;
+      timer4Finished = false;
+      document.getElementById("timer4").innerText = "";
+    });
     }); // End of DOMContentLoaded
   </script>
 </div>
@@ -610,7 +760,7 @@
   <div id="about" style="position:fixed; bottom:20px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10; display:none; text-align: center;">
     <strong>About BIG RED CLOCK</strong>
     <p>
-      This fullscreen clock shows the current time with millisecond precision, a date, and up to three countdown timers.
+      This fullscreen clock shows the current time with centisecond precision, a date, and up to four countdown timers.
     </p>
     <ul>
       <li>Click on the red clock to toggle control panels (timezone, timer settings).</li>
