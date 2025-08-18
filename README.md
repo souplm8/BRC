@@ -3,6 +3,9 @@
 🕒 BIG RED CLOCK – Local Time Server (time_server.py)
 
 This Python-based HTTP server acts as a proxy between an NTP server and web clients.It provides a REST API endpoint for accessing synchronized time in JSON format.
+Avaliable to run from broser
+
+https://souplm8.github.io/BRC/
 
 📦 Installation
 
