@@ -70,7 +70,10 @@
       font-family: 'NimbusSansL', sans-serif;
       font-size: 60px;
       color: white;
+      white-space: nowrap;
+      text-align: center;
     }
+    .timer .label { margin-right: 0.35em; }
     svg {
       width: 1080px;
       height: 1080px;
@@ -321,6 +324,37 @@
     </div>
     <hr>
     <div>
+      <strong>Etykiety timerów</strong><br>
+      <label for="labelTimer1">Timer 1 – etykieta:</label><br>
+      <input type="text" id="labelTimer1" placeholder="np. Pre-roll"><br>
+      <label for="labelTimer2">Timer 2 – etykieta:</label><br>
+      <input type="text" id="labelTimer2" placeholder="np. Start"><br>
+      <label for="labelTimer3">Timer 3 – etykieta:</label><br>
+      <input type="text" id="labelTimer3" placeholder="np. Goście"><br>
+      <label for="labelTimer4">Timer 4 – etykieta:</label><br>
+      <input type="text" id="labelTimer4" placeholder="np. Prezentacja"><br>
+      <label for="labelTimer5">Timer 5 – etykieta:</label><br>
+      <input type="text" id="labelTimer5" placeholder="np. Q&A"><br>
+      <label for="labelTimer6">Timer 6 – etykieta:</label><br>
+      <input type="text" id="labelTimer6" placeholder="np. Koniec"><br>
+    </div>
+    <hr>
+    <div>
+      <strong>Progi kolorów</strong><br>
+      <label for="colorPreset">Preset:</label>
+      <select id="colorPreset">
+        <option value="default" selected>Domyślne (15/5 min)</option>
+        <option value="short">Krótki (5/2 min)</option>
+        <option value="long">Długi (30/10 min)</option>
+        <option value="xl">Bardzo długi (60/15 min)</option>
+        <option value="custom">Niestandardowe</option>
+      </select><br>
+      <div id="customThresholds" style="display:none; margin-top:6px;">
+        <label>Pomarańczowy (min): <input type="number" id="orangeMin" min="0" value="15" style="width:80px;"></label><br>
+        <label>Czerwony (min): <input type="number" id="redMin" min="0" value="5" style="width:80px;"></label>
+      </div>
+    </div>
+    <div>
       <strong>Actions</strong><br>
       <button id="setTimers">Set Timers</button><br><br>
       <button id="resetTimers">Reset All Timers</button><br><br>
@@ -389,6 +423,16 @@
     let timer6Finished = false;
     let lastSecond = -1;
 
+    // --- Global color thresholds (minutes) and preset ---
+    let warnOrangeMin = Number(localStorage.getItem('warnOrangeMin')) || 15;
+    let warnRedMin = Number(localStorage.getItem('warnRedMin')) || 5;
+    let colorPreset = localStorage.getItem('colorPreset') || 'default';
+
+    function getTimerLabel(elementId) {
+      const key = 'label_' + elementId; // e.g., label_timer1
+      return localStorage.getItem(key) || '';
+    }
+
     // --- Global helper: parse datetime-local input in the selected timezone to UTC millis ---
     window.toTargetUtcMillis = function(inputId) {
       const iso = document.getElementById(inputId).value; // "YYYY-MM-DDTHH:mm"
@@ -438,18 +482,25 @@
         const m = Math.floor((totalSec % 3600) / 60);
         const s = totalSec % 60;
 
-        el.innerText = `${isFuture ? '-' : '+'}${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        const label = getTimerLabel(elementId);
+        const sign = isFuture ? '-' : '+';
+        const timeText = `${sign}${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if (label) {
+          el.innerHTML = `<span class="label">${label}</span><span class="value">${timeText}</span>`;
+        } else {
+          el.innerText = timeText;
+        }
 
         if (isFuture) {
-          if (abs <= 5 * 60 * 1000) {
-            el.style.color = "red";
-          } else if (abs <= 15 * 60 * 1000) {
-            el.style.color = "orange";
+          if (abs <= warnRedMin * 60 * 1000) {
+            el.style.color = 'red';
+          } else if (abs <= warnOrangeMin * 60 * 1000) {
+            el.style.color = 'orange';
           } else {
-            el.style.color = "white";
+            el.style.color = 'white';
           }
         } else {
-          el.style.color = "lime";
+          el.style.color = 'lime';
           if (!window[finishedFlagName]) window[finishedFlagName] = true;
         }
       }
@@ -620,6 +671,69 @@
     const syncStatus = document.getElementById("sync-status");
     const toggleSyncIcon = document.getElementById("toggleSyncIcon");
     const timezoneSelect = document.getElementById("timezoneSelect");
+
+    // --- Labels & Color Presets UI ---
+    const labelInputs = [
+      ['timer1','labelTimer1'],
+      ['timer2','labelTimer2'],
+      ['timer3','labelTimer3'],
+      ['timer4','labelTimer4'],
+      ['timer5','labelTimer5'],
+      ['timer6','labelTimer6']
+    ];
+    labelInputs.forEach(([tid, iid]) => {
+      const inp = document.getElementById(iid);
+      if (!inp) return;
+      const key = 'label_' + tid;
+      inp.value = localStorage.getItem(key) || '';
+      inp.addEventListener('input', () => {
+        localStorage.setItem(key, inp.value.trim());
+        updateClock();
+      });
+    });
+
+    const colorPresetSelect = document.getElementById('colorPreset');
+    const customBox = document.getElementById('customThresholds');
+    const orangeMinInput = document.getElementById('orangeMin');
+    const redMinInput = document.getElementById('redMin');
+
+    function applyPreset(preset) {
+      if (preset === 'short') { warnOrangeMin = 5; warnRedMin = 2; }
+      else if (preset === 'long') { warnOrangeMin = 30; warnRedMin = 10; }
+      else if (preset === 'xl') { warnOrangeMin = 60; warnRedMin = 15; }
+      else if (preset === 'custom') {
+        warnOrangeMin = Number(orangeMinInput.value) || 15;
+        warnRedMin = Number(redMinInput.value) || 5;
+      } else { // default
+        warnOrangeMin = 15; warnRedMin = 5;
+      }
+      localStorage.setItem('colorPreset', preset);
+      localStorage.setItem('warnOrangeMin', String(warnOrangeMin));
+      localStorage.setItem('warnRedMin', String(warnRedMin));
+      updateClock();
+    }
+
+    if (colorPresetSelect) {
+      // init
+      if (colorPreset) colorPresetSelect.value = colorPreset;
+      customBox.style.display = (colorPresetSelect.value === 'custom') ? 'block' : 'none';
+      // if custom was saved earlier, reflect saved values
+      if (colorPresetSelect.value === 'custom') {
+        orangeMinInput.value = localStorage.getItem('warnOrangeMin') || orangeMinInput.value;
+        redMinInput.value = localStorage.getItem('warnRedMin') || redMinInput.value;
+      }
+      applyPreset(colorPresetSelect.value);
+      colorPresetSelect.addEventListener('change', () => {
+        customBox.style.display = (colorPresetSelect.value === 'custom') ? 'block' : 'none';
+        applyPreset(colorPresetSelect.value);
+      });
+      orangeMinInput.addEventListener('input', () => {
+        if (colorPresetSelect.value === 'custom') applyPreset('custom');
+      });
+      redMinInput.addEventListener('input', () => {
+        if (colorPresetSelect.value === 'custom') applyPreset('custom');
+      });
+    }
 
     // --- Output click: toggle controls ---
     output.addEventListener("click", () => {
@@ -1039,6 +1153,55 @@ function applyLayout() {
       timer6Finished = false;
       document.getElementById("timer6").innerText = "";
     });
+    
+    // --- Keyboard Shortcuts ---
+    document.addEventListener('keydown', (e) => {
+      const tag = (document.activeElement && document.activeElement.tagName) || '';
+      if (['INPUT','TEXTAREA','SELECT'].includes(tag)) return; // ignore while typing
+
+      // Toggle panels: S
+      if (e.key === 's' || e.key === 'S') {
+        const isVisible = offsetControls.style.display === 'block';
+        const show = !isVisible;
+        offsetControls.style.display = show ? 'block' : 'none';
+        timerControls.style.display = show ? 'block' : 'none';
+        return;
+      }
+      // Toggle minimal mode: G
+      if (e.key === 'g' || e.key === 'G') {
+        if (minimalModeCheckbox) {
+          minimalModeCheckbox.checked = !minimalModeCheckbox.checked;
+          localStorage.setItem('minimalMode', minimalModeCheckbox.checked ? '1' : '0');
+          applyLayout();
+          scaleToFitWindow();
+        }
+        return;
+      }
+      // Reset all timers: R
+      if (e.key === 'r' || e.key === 'R') {
+        const btn = document.getElementById('resetTimers');
+        if (btn) btn.click();
+        return;
+      }
+      // Focus specific timer input: 1..6
+      if ('123456'.includes(e.key)) {
+        const n = e.key;
+        const show = true;
+        offsetControls.style.display = 'block';
+        timerControls.style.display = 'block';
+        const inp = document.getElementById(`timer${n}Input`);
+        if (inp) { inp.focus(); inp.scrollIntoView({behavior:'smooth', block:'center'}); }
+        return;
+      }
+      // Ctrl+1..6: reset specific timer
+      if (e.ctrlKey && '123456'.includes(e.key)) {
+        const n = e.key;
+        const btn = document.getElementById(`resetTimer${n}`);
+        if (btn) btn.click();
+        return;
+      }
+    });
+
     }); // End of DOMContentLoaded
   </script>
 </div>
