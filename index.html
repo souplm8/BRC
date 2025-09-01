@@ -867,61 +867,128 @@ function applyDefaultLayout() {
   const svgEl = document.querySelector('#wrapper svg');
   if (svgEl) svgEl.style.display = 'block';
 
+  // --- Geometry of the ring (in base 1080 space) ---
+  const RING_RADIUS = 450;          // dots radius from SVG
+  const SAFETY_PAD = 26;            // px margin to stay clear of dots/ticks
+  const innerRadiusBase = RING_RADIUS - SAFETY_PAD; // inside of the ring
+
+  // Screen scale of 1080x1080 square
+  const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1080);
+  const innerRadiusPx = innerRadiusBase * scale; // radius on screen in px
+  const viewCenterY = window.innerHeight / 2;    // center in viewport coords
+
+  // Hidden measurer for exact width
+  let measurer = document.getElementById('fit-measurer');
+  if (!measurer) {
+    measurer = document.createElement('div');
+    measurer.id = 'fit-measurer';
+    measurer.style.position = 'absolute';
+    measurer.style.left = '-99999px';
+    measurer.style.top = '0';
+    measurer.style.whiteSpace = 'nowrap';
+    measurer.style.visibility = 'hidden';
+    document.body.appendChild(measurer);
+  }
+
+  function textWidth(txt, weight, px) {
+    measurer.style.fontFamily = "'NimbusSansL', sans-serif";
+    measurer.style.fontWeight = weight;
+    measurer.style.fontSize = px + 'px';
+    measurer.textContent = txt;
+    return measurer.scrollWidth;
+  }
+
+  // Maximum usable chord width at a given vertical center (percent-of-viewport)
+  function chordWidthAtYPercent(yPercent) {
+    const y = (yPercent / 100) * window.innerHeight;
+    const dy = Math.abs(y - viewCenterY);
+    if (dy >= innerRadiusPx) return 0;
+    return 2 * Math.sqrt(innerRadiusPx * innerRadiusPx - dy * dy);
+  }
+
+  // Fit a line's font-size so that its real text width <= allowed chord width
+  function fitFontFor(el, yPercent, desiredPx, weight, sample) {
+    const maxW = Math.floor(chordWidthAtYPercent(yPercent) * 0.96); // 4% margin
+    if (maxW <= 0) return 0;
+    const text = (el.innerText && el.innerText.trim()) || sample;
+    let lo = 12, hi = Math.max(12, desiredPx);
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi + 1) / 2);
+      if (textWidth(text, weight, mid) <= maxW) lo = mid; else hi = mid - 1;
+    }
+    return lo;
+  }
+
+  // Elements
   const out = document.getElementById('output');
-  out.style.top = '50%';
-  out.style.fontSize = '120px';
-
   const dateEl = document.getElementById('date');
-  dateEl.style.top = '60%';
-  dateEl.style.fontSize = '50px';
 
-  // Lay out timers dynamically so up to 6 fit without overlapping the main clock
+  // --- Center clock (keep entirely inside inner circle) ---
+  // Place at exact center vertically
+  out.style.top = '50%';
+  // Find the max font that fits inside the inner circle diameter
+  const outDesired = 120;
+  const outSample = '88:88:88.88';
+  const outPx = fitFontFor(out, 50, outDesired, 'bold', outSample);
+  out.style.fontSize = Math.max(36, outPx) + 'px';
+
+  // Date sits below the center but still inside the ring
+  const dateY = 62; // %
+  dateEl.style.top = dateY + '%';
+  const dateDesired = 50;
+  const datePx = fitFontFor(dateEl, dateY, dateDesired, 'normal', '2025.09.01');
+  dateEl.style.fontSize = Math.max(20, datePx) + 'px';
+
+  // --- Lay out timers strictly inside the inner circle ---
   const visible = getVisibleTimerIds();
   const n = visible.length;
-
-  // If no timers are visible, keep original fixed positions
   if (n === 0) {
-    const t1 = document.getElementById('timer1'); if (t1) { t1.style.top = '15%'; t1.style.fontSize = '60px'; }
-    const t2 = document.getElementById('timer2'); if (t2) { t2.style.top = '21%'; t2.style.fontSize = '60px'; }
-    const t3 = document.getElementById('timer3'); if (t3) { t3.style.top = '79%'; t3.style.fontSize = '60px'; }
-    const t4 = document.getElementById('timer4'); if (t4) { t4.style.top = '85%'; t4.style.fontSize = '60px'; }
-    const t5 = document.getElementById('timer5'); if (t5) { t5.style.top = '91%'; t5.style.fontSize = '60px'; }
-    const t6 = document.getElementById('timer6'); if (t6) { t6.style.top = '97%'; t6.style.fontSize = '60px'; }
+    // Hide timers if none are visible
+    ['timer1','timer2','timer3','timer4','timer5','timer6'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.style.display = 'none'; el.innerText = ''; }
+    });
     return;
   }
 
-  // base font size for timers scales down when more timers are present
-  const baseTimerSize = Math.max(36, Math.floor(60 - (n - 4) * 6));
+  // Choose vertical bands well inside the ring so text never touches the dots
+  // Push a bit toward the center to increase chord width headroom.
+  const topBandStart = 18, topBandEnd = 32;      // % from top
+  const bottomBandStart = 68, bottomBandEnd = 82; // % from top
 
-  // Split timers into top and bottom groups to keep the center clock unobstructed
   const topCount = Math.ceil(n / 2);
   const bottomCount = n - topCount;
-  const topStart = 12, topEnd = 28;    // percent positions for top group
-  const bottomStart = 72, bottomEnd = 88; // percent positions for bottom group
 
-  // Place top group (ascending Y)
+  // Base desired timer size; will be individually shrunk to fit chord width
+  const baseTimerDesired = 60;
+
+  // Place top timers
   for (let i = 0; i < topCount; i++) {
     const id = visible[i];
     const el = document.getElementById(id);
     if (!el) continue;
-    const topY = topCount === 1 ? (topStart + topEnd) / 2 : topStart + (topEnd - topStart) * (i / (topCount - 1));
-    el.style.top = topY + '%';
-    el.style.fontSize = baseTimerSize + 'px';
+    const t = topCount === 1 ? (topBandStart + topBandEnd) / 2
+                              : topBandStart + (topBandEnd - topBandStart) * (i / (topCount - 1));
+    el.style.top = t + '%';
+    const px = fitFontFor(el, t, baseTimerDesired, 'normal', '-888:88:88');
+    el.style.fontSize = Math.max(28, px) + 'px';
     el.style.display = 'block';
   }
 
-  // Place bottom group (descending from center)
+  // Place bottom timers
   for (let j = 0; j < bottomCount; j++) {
     const id = visible[topCount + j];
     const el = document.getElementById(id);
     if (!el) continue;
-    const bottomY = bottomCount === 1 ? (bottomStart + bottomEnd) / 2 : bottomStart + (bottomEnd - bottomStart) * (j / (bottomCount - 1));
-    el.style.top = bottomY + '%';
-    el.style.fontSize = baseTimerSize + 'px';
+    const b = bottomCount === 1 ? (bottomBandStart + bottomBandEnd) / 2
+                                : bottomBandStart + (bottomBandEnd - bottomBandStart) * (j / (bottomCount - 1));
+    el.style.top = b + '%';
+    const px = fitFontFor(el, b, baseTimerDesired, 'normal', '-888:88:88');
+    el.style.fontSize = Math.max(28, px) + 'px';
     el.style.display = 'block';
   }
 
-  // Hide any timers that are not currently in the visible list
+  // Hide non-visible timers
   ['timer1','timer2','timer3','timer4','timer5','timer6'].forEach(id => {
     if (!visible.includes(id)) {
       const el = document.getElementById(id);
