@@ -195,7 +195,7 @@
       <option value="UTC">(UTC+00:00) UTC</option>
       <option value="Europe/London">(UTC+01:00) London</option>
       <option value="Europe/Paris">(UTC+02:00) Paris</option>
-      <option value="Europe/Warsaw" selected>(UTC+02:00) Warsaw</option>
+      <option value="Europe/Warsaw" selected>(UTC+02:00) CEST Warsaw</option>
       <option value="Europe/Moscow">(UTC+03:00) Moscow</option>
       <option value="Asia/Tehran">(UTC+03:30) Tehran</option>
       <option value="Asia/Dubai">(UTC+04:00) Dubai</option>
@@ -210,7 +210,14 @@
       <option value="Australia/Sydney">(UTC+10:00) Sydney</option>
       <option value="Pacific/Noumea">(UTC+11:00) Noumea</option>
       <option value="Pacific/Auckland">(UTC+12:00) Auckland</option>
+      <!-- The common abbreviations group has been removed at user request.  All zones
+           now appear in the main list, and abbreviations are appended directly
+           to each label using the script below. -->
     </select>
+    <!-- Removed timezone difference grid at user request.  Instead of displaying a permanent
+         table of offsets, the dropdown itself will append fixed abbreviations (e.g., CET)
+         to each zone's label.  This keeps the interface uncluttered while still
+         conveying the abbreviation. -->
     <br>
     <label for="timeSourceSelect">Time source:</label>
     <select id="timeSourceSelect">
@@ -428,6 +435,70 @@
     let warnRedMin = Number(localStorage.getItem('warnRedMin')) || 5;
     let colorPreset = localStorage.getItem('colorPreset') || 'default';
 
+    // --- Definition of common zones and their fixed abbreviations for the
+    // difference grid.  Each entry specifies the IANA zone identifier and
+    // the preferred abbreviation to display.  These abbreviations are
+    // deliberately fixed (EST, CST, etc.) to provide a familiar reference
+    // independent of daylight saving time.  The difference grid uses
+    // these abbreviations alongside the relative offset to the selected
+    // display timezone.
+    const tzAbbrList = [
+      { zone: 'Europe/Warsaw', abbr: 'CET' },          // Central European Time (Warsaw)
+      { zone: 'America/New_York', abbr: 'EST' },       // Eastern Time (New York)
+      { zone: 'America/Chicago', abbr: 'CST' },        // Central Time (Chicago)
+      { zone: 'America/Los_Angeles', abbr: 'PST' },    // Pacific Time (Los Angeles)
+      { zone: 'UTC', abbr: 'UTC' },                    // Coordinated Universal Time
+      { zone: 'Asia/Kolkata', abbr: 'IST' },           // India Standard Time
+      { zone: 'America/Denver', abbr: 'MST' },         // Mountain Time (Denver)
+      { zone: 'Etc/GMT', abbr: 'GMT' },                // Greenwich Mean Time
+      { zone: 'Europe/Bucharest', abbr: 'EET' },       // Eastern European Time
+      { zone: 'Europe/London', abbr: 'BST' },          // British Time (London)
+      { zone: 'Australia/Sydney', abbr: 'AEDT' },      // Australian Eastern Daylight Time
+      { zone: 'Europe/Berlin', abbr: 'CEST' },         // Central European Summer Time (Berlin)
+      { zone: 'America/Halifax', abbr: 'AST' },        // Atlantic Standard Time
+      { zone: 'Asia/Singapore', abbr: 'SGT' },         // Singapore Time
+      { zone: 'Asia/Dubai', abbr: 'GST' },             // Gulf Standard Time
+      { zone: 'Australia/Perth', abbr: 'AWST' },       // Australian Western Standard Time
+      { zone: 'Asia/Shanghai', abbr: 'CST-CH' },       // China Standard Time
+      { zone: 'America/Adak', abbr: 'HDT' },           // Hawaii-Aleutian Daylight Time (Adak)
+      { zone: 'Asia/Hong_Kong', abbr: 'HKT' },         // Hong Kong Time
+      { zone: 'Pacific/Honolulu', abbr: 'HST' },       // Hawaii Standard Time
+      { zone: 'Asia/Jerusalem', abbr: 'IDT' },         // Israel Daylight Time
+      { zone: 'Asia/Bangkok', abbr: 'ICT' },           // Indochina Time
+      { zone: 'Asia/Tokyo', abbr: 'JST' },             // Japan Standard Time
+      { zone: 'Asia/Seoul', abbr: 'KST' },             // Korea Standard Time
+      { zone: 'Europe/Moscow', abbr: 'MSK' },          // Moscow Standard Time
+      { zone: 'Asia/Manila', abbr: 'PHT' },            // Philippine Time
+      { zone: 'Africa/Johannesburg', abbr: 'SAST' },   // South Africa Standard Time
+      { zone: 'Asia/Karachi', abbr: 'PKT' },           // Pakistan Standard Time
+      { zone: 'Africa/Nairobi', abbr: 'EAT' },         // East Africa Time
+      { zone: 'America/Havana', abbr: 'CST-CU' },      // Cuba Standard Time
+      { zone: 'Pacific/Auckland', abbr: 'NZST' },      // New Zealand Standard Time
+      { zone: 'Asia/Kuala_Lumpur', abbr: 'MYT' },      // Malaysia Time
+      { zone: 'America/Sao_Paulo', abbr: 'BRT' },      // Brazil Time (São Paulo)
+      { zone: 'America/Anchorage', abbr: 'AKST' },     // Alaska Standard Time
+      { zone: 'America/Santiago', abbr: 'CLT' },       // Chile Standard Time
+      { zone: 'America/Montevideo', abbr: 'UYT' },     // Uruguay Time
+      { zone: 'Europe/Lisbon', abbr: 'WET' }           // Western European Time
+    ];
+
+    // Returns a fixed abbreviation for a given IANA zone ID if it exists in the
+    // tzAbbrList above.  If no fixed abbreviation is defined, it falls back to
+    // Luxon's short offset name for that zone at the current time.  This helper
+    // is used to append clear, familiar abbreviations (e.g., CET) to timezone
+    // labels in the dropdown without relying solely on dynamic DST names like CEST.
+    function getFixedAbbr(zoneId) {
+      const entry = tzAbbrList.find(e => e.zone === zoneId);
+      if (entry) return entry.abbr;
+      try {
+        const dt = luxon.DateTime.now().setZone(zoneId);
+        return dt.offsetNameShort || '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+
     function getTimerLabel(elementId) {
       const key = 'label_' + elementId; // e.g., label_timer1
       return localStorage.getItem(key) || '';
@@ -459,12 +530,29 @@
       const day = String(localNow.day).padStart(2, '0');
       document.getElementById("date").innerText = `${year}.${month}.${day}`;
 
+      // Detect DST transitions: if the offset of the currently selected timezone
+      // changes relative to the last known offset, refresh the labels in the
+      // dropdown.  Luxon automatically applies daylight saving rules when
+      // converting to a zone, so comparing offsets allows us to refresh the
+      // displayed UTC offsets.  Without this, the list would continue to
+      // display the old offset across DST transitions.
+      try {
+        const currentOffset = localNow.offset;
+        if (currentTzOffsetForSavedZone === null || currentOffset !== currentTzOffsetForSavedZone) {
+          currentTzOffsetForSavedZone = currentOffset;
+          refreshTimezoneLabels();
+        }
+      } catch (e) {
+        // ignore offset check errors
+      }
+
       // Update second dots only when the second changes
       if (localNow.second !== lastSecond) {
         for (let i = 0; i < 60; i++) {
           dots[i].setAttribute("fill", i <= localNow.second ? "red" : "black");
         }
         lastSecond = localNow.second;
+        // No longer refresh a difference grid here; abbreviations are handled directly in the dropdown.
       }
 
       // --- updateTimer helper using synced UTC ---
@@ -756,8 +844,9 @@
       timezoneSelect.value = savedTz;
       timezoneSelect.addEventListener("change", () => {
         localStorage.setItem("lastUsedTimezone", timezoneSelect.value);
-        synchronizeTime();
-        updateClock(); // Force update on timezone change
+        // Keep the current synchronization but do not re-sync on display zone change
+        // Resynchronize only if the underlying offset may have drifted (handled elsewhere)
+        updateClock(); // Force immediate update on timezone change
       });
       const timeSourceSelect = document.getElementById("timeSourceSelect");
       const ntpInput = document.getElementById("ntpServerInput");
@@ -787,6 +876,84 @@
     initializeTimezone();
     applyLayout();
     scaleToFitWindow();
+
+    // Removed: initial time difference grid.  Abbreviations are now
+    // appended directly in the dropdown labels.
+
+    // Track the last known offset (in minutes) for the currently selected timezone.
+    // When this offset changes (e.g. due to a daylight saving transition), the
+    // dropdown labels will be refreshed to display the new offsets.  Without
+    // tracking this, the dropdown would show a stale UTC offset during DST changes.
+    let currentTzOffsetForSavedZone = null;
+
+    /**
+     * refreshTimezoneLabels
+     *
+     * Iterates through the timezone select options and updates their labels
+     * to follow the pattern `(UTC±offset) abbreviation City`.  The
+     * abbreviation is taken from the static tzAbbrList where available,
+     * otherwise from Luxon's `offsetNameShort`.  The offset is computed
+     * using the current date/time for each zone, so it will reflect
+     * daylight-saving changes.  The original city portion of each option
+     * is preserved in opt.dataset.cityPart on first run.
+     */
+    function refreshTimezoneLabels() {
+      const tzSelectEl = document.getElementById('timezoneSelect');
+      if (!tzSelectEl) return;
+      for (const opt of tzSelectEl.options) {
+        const parent = opt.parentElement;
+        // Skip any remnants of a "Common Abbreviations" optgroup (none should exist)
+        if (parent && parent.tagName === 'OPTGROUP' && parent.getAttribute('label') === 'Common Abbreviations') {
+          continue;
+        }
+        const zoneId = opt.value;
+        try {
+          const abbr = getFixedAbbr(zoneId);
+          if (abbr) {
+            // Persist the city part if not already stored
+            if (!opt.dataset.cityPart) {
+              const txt = opt.textContent;
+              const endParen = txt.indexOf(')');
+              if (txt.startsWith('(') && endParen > 0) {
+                let city = txt.substring(endParen + 1).trim();
+                // Remove any leading abbreviation token from the city part.  Many
+                // of the static option labels embed an abbreviation (e.g., "CEST Warsaw").
+                // We heuristically strip the first word if it looks like an
+                // abbreviation (uppercase letters optionally containing a hyphen).
+                const parts = city.split(/\s+/);
+                if (parts.length > 1) {
+                  const first = parts[0];
+                  if (/^[A-Z]{2,5}(?:-[A-Z]{2,3})?$/.test(first)) {
+                    parts.shift();
+                  }
+                  city = parts.join(' ').trim();
+                }
+                // Remove any leading dash that might remain
+                if (city.startsWith('-') || city.startsWith('–')) {
+                  city = city.substring(1).trim();
+                }
+                opt.dataset.cityPart = city;
+              }
+            }
+            // Compute current UTC offset for this zone using Luxon (in minutes)
+            const dtZone = luxon.DateTime.now().setZone(zoneId);
+            const offsetMinutes = dtZone.offset;
+            const sign = offsetMinutes >= 0 ? '+' : '-';
+            const absMin = Math.abs(offsetMinutes);
+            const hours = String(Math.floor(absMin / 60)).padStart(2, '0');
+            const minutes = String(absMin % 60).padStart(2, '0');
+            const offsetStr = `UTC${sign}${hours}:${minutes}`;
+            const cityPart = opt.dataset.cityPart || '';
+            opt.textContent = `(${offsetStr}) ${abbr} ${cityPart}`;
+          }
+        } catch (e) {
+          // ignore invalid zone entries
+        }
+      }
+    }
+
+    // Perform an initial refresh of timezone labels when the DOM loads
+    refreshTimezoneLabels();
 
 // --- Minimal mode init ---
 const savedMinimal = localStorage.getItem("minimalMode") === "1";
