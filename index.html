@@ -64,7 +64,7 @@
       align-items: center;
     }
     .timer {
-      position: fixed;
+      position: absolute;
       left: 50%;
       transform: translate(-50%, -50%);
       font-family: 'NimbusSansL', sans-serif;
@@ -79,7 +79,7 @@
       height: 1080px;
     }
     #output {
-      position: fixed;
+      position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
@@ -93,7 +93,7 @@
       pointer-events: auto;
     }
     #date {
-      position: fixed;
+      position: absolute;
       top: 60%;
       left: 50%;
       transform: translate(-50%, -50%);
@@ -121,7 +121,7 @@
       color: yellow;
     }
     #logo {
-      position: fixed;
+      position: absolute;
       top: 70%;
       left: 50%;
       transform: translate(-50%, -50%);
@@ -168,10 +168,10 @@
     <div id="date"></div>
     <div id="timer1" class="timer" style="top:15%;"></div>
     <div id="timer2" class="timer" style="top:21%;"></div>
-    <div id="timer3" class="timer" style="top:79%;"></div>
-    <div id="timer4" class="timer" style="top:85%;"></div>
-    <div id="timer5" class="timer" style="top:91%;"></div>
-    <div id="timer6" class="timer" style="top:97%;"></div>
+    <div id="timer3" class="timer" style="top:27%;"></div>
+    <div id="timer4" class="timer" style="top:73%;"></div>
+    <div id="timer5" class="timer" style="top:79%;"></div>
+    <div id="timer6" class="timer" style="top:85%;"></div>
     <div id="sync-status"></div>
   </div>
 
@@ -383,7 +383,13 @@
     }
 
     // --- Time synchronization and timer variables ---
-    // Offset between local clock and synchronized server time (ms)
+    //
+    // `timeOffset` stores the difference (in milliseconds) between the local
+    // system clock (`Date.now()`) and the last successfully synchronized
+    // server time.  This offset is applied every time the clock is updated
+    // so that even if the user's system clock drifts, the displayed time
+    // remains accurate.  The value is persisted in localStorage under
+    // `lastValidOffset` and reloaded on page initialization.
     let timeOffset = Number(localStorage.getItem("lastValidOffset")) || 0;
     // Target times for the countdown timers (ms since epoch)
     let timer1Target = null;
@@ -392,6 +398,17 @@
     let timer4Target = null;
     let timer5Target = null;
     let timer6Target = null;
+
+    // Raw ISO strings (from inputs) used to re-compute targets when timezone changes
+    let timer1Iso = null;
+    let timer2Iso = null;
+    let timer3Iso = null;
+    let timer4Iso = null;
+    let timer5Iso = null;
+    let timer6Iso = null;
+
+    // Track which display timezone was last used to compute targets
+    let lastTargetsTz = null;
     // Flags to track if each timer has finished
     let timer1Finished = false;
     let timer2Finished = false;
@@ -477,17 +494,53 @@
 
     // --- Global helper: parse datetime-local input in the selected timezone to UTC millis ---
     window.toTargetUtcMillis = function(inputId) {
+      // Read the value of a <input type="datetime-local"> and convert it to a
+      // UTC timestamp (milliseconds since epoch).  The input value is assumed
+      // to be in the current display timezone.  We first look up the
+      // per-tab display timezone stored in `sessionStorage.displayTimezone`.
+      // If there is no per-tab setting (e.g. on a fresh tab), we fall back
+      // to the last synchronization timezone stored in `lastSyncTimezone`,
+      // then to any legacy `lastUsedTimezone`, and finally to the default
+      // "Europe/Warsaw".  Converting via Luxon ensures daylight-saving rules
+      // are applied correctly for the chosen zone.
       const iso = document.getElementById(inputId).value; // "YYYY-MM-DDTHH:mm"
       if (!iso) return null;
-      // Prefer per-tab display timezone stored in sessionStorage; fall back to the
-      // last synced timezone (for backward compatibility) or default Warsaw.
       const tz = sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
       return luxon.DateTime.fromISO(iso, { zone: tz }).toUTC().toMillis();
     };
 
+    // Convert an ISO string to UTC millis using provided tz or current display tz
+    window.isoToUtcMillis = function(iso, tzOpt) {
+      if (!iso) return null;
+      const tz = tzOpt || (sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw");
+      return luxon.DateTime.fromISO(iso, { zone: tz }).toUTC().toMillis();
+    };
+
+    // Recompute all timer targets from stored ISO strings for a given display timezone
+    function recomputeTargetsForTz(tz) {
+      timer1Target = timer1Iso ? isoToUtcMillis(timer1Iso, tz) : null;
+      timer2Target = timer2Iso ? isoToUtcMillis(timer2Iso, tz) : null;
+      timer3Target = timer3Iso ? isoToUtcMillis(timer3Iso, tz) : null;
+      timer4Target = timer4Iso ? isoToUtcMillis(timer4Iso, tz) : null;
+      timer5Target = timer5Iso ? isoToUtcMillis(timer5Iso, tz) : null;
+      timer6Target = timer6Iso ? isoToUtcMillis(timer6Iso, tz) : null;
+    }
+
     // --- updateClock: Updates the main clock and timer displays ---
     function updateClock() {
+      // Determine which timezone to use when displaying the clock.  We read
+      // the per-tab display timezone from sessionStorage so that each open
+      // tab can have its own independent setting.  If none is set, fall
+      // back to the timezone used for the last successful synchronization
+      // (`lastSyncTimezone`), or to any legacy `lastUsedTimezone`, then to
+      // the default "Europe/Warsaw".  This design prevents a change in one
+      // tab from propagating to others via localStorage.
       const tz = sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
+      // If the display timezone changed since the last target computation, rebuild targets
+      if (tz !== lastTargetsTz) {
+        recomputeTargetsForTz(tz);
+        lastTargetsTz = tz;
+      }
       const nowUtc = Date.now() + timeOffset;
       const localNow = luxon.DateTime.fromMillis(nowUtc, { zone: "utc" }).setZone(tz);
 
@@ -671,8 +724,12 @@
         // Calculate and save offset between server and local time
         timeOffset = serverTime - Date.now();
         localStorage.setItem("lastValidOffset", timeOffset);
-        // Persist the timezone used for synchronization separately from the display timezone.
-        // This prevents changes made in one tab from affecting the default display in other tabs.
+        // Persist the timezone used for synchronization separately from the display
+        // timezone.  Storing under `lastSyncTimezone` allows the application
+        // to remember which zone was used to compute the current `timeOffset`
+        // while keeping the per-tab display timezone (stored in sessionStorage)
+        // independent.  This prevents a change in one tab from altering the
+        // initial display in another tab.
         localStorage.setItem("lastSyncTimezone", tz);
         updateClock(); // Force clock update after new offset
         status.textContent = "Ω";
@@ -701,7 +758,38 @@
       return cb ? cb.checked : saved;
     }
 
-    // --- scaleToFitWindow: In minimal mode use full viewport (no square scaling) ---
+    // --- Helper: compute width occupied by visible control panels ---
+    // When either the timezone/offset panel or the timer panel is visible, they
+    // occupy fixed space on the right side of the viewport.  In non‑minimal
+    // mode we need to subtract this width so the clock scales only within
+    // the remaining horizontal space.  This helper inspects both panels and
+    // returns the maximum width of any visible panel; if both panels are
+    // hidden, it returns 0.
+    function getVisiblePanelWidth() {
+      let maxW = 0;
+      // Look up controls on demand so we don't rely on capture order.  Each
+      // call retrieves the element fresh from the DOM, ensuring that we
+      // measure the current width after any dynamic content changes.
+      const oc = document.getElementById('offset-controls');
+      const tc = document.getElementById('timer-controls');
+      // Only count panels that are currently displayed (block).  Other
+      // display values (none) or undefined are ignored.
+      if (oc && oc.style.display === 'block') {
+        // Include right margin (distance from viewport edge) when subtracting
+        // panel width.  Read computed style to account for inline CSS values.
+        const ocStyles = window.getComputedStyle(oc);
+        const right = parseInt(ocStyles.right || '0', 10) || 0;
+        maxW = Math.max(maxW, oc.offsetWidth + right);
+      }
+      if (tc && tc.style.display === 'block') {
+        const tcStyles = window.getComputedStyle(tc);
+        const right = parseInt(tcStyles.right || '0', 10) || 0;
+        maxW = Math.max(maxW, tc.offsetWidth + right);
+      }
+      return maxW;
+    }
+
+    // --- scaleToFitWindow: adapt the 1080px clock to available space ---
     function scaleToFitWindow() {
       const wrapper = document.getElementById('wrapper');
       if (!wrapper) return;
@@ -714,7 +802,8 @@
         wrapper.style.left = '0px';
         wrapper.style.top = '0px';
       } else {
-        // Original square scaling for graphics mode
+        // In graphics mode the clock lives in a fixed 1080x1080 square.
+        // Scale it uniformly based on whichever screen dimension is smaller.
         wrapper.style.width = '1080px';
         wrapper.style.height = '1080px';
         const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1080);
@@ -810,6 +899,12 @@
         // Ensure panels always sit above the clock (in case inline styles were changed elsewhere)
         offsetControls.style.zIndex = "10000";
         timerControls.style.zIndex = "10000";
+        // Re‑compute clock scaling whenever panels are shown or hidden.  Without
+        // this call, the ring might retain its previous scale until the
+        // browser window is resized, causing it to appear too large or too
+        // small relative to the control panel.  Invoking scaleToFitWindow()
+        // ensures that the clock fits snugly alongside the panel.
+        scaleToFitWindow();
       }
     });
 
@@ -820,18 +915,29 @@
       // back to the default Warsaw.  This ensures each tab can maintain its own
       // display timezone without affecting other open tabs.
       const savedDisplay = sessionStorage.getItem("displayTimezone");
-      // Fallback to the last synchronization timezone if available, then to the
-      // previously used display timezone.  This prevents a change in one tab
-      // from propagating to others and ensures new tabs default to the last
-      // synchronized timezone.
+      // Determine the initial display timezone.  We prefer a per-tab setting
+      // stored in `sessionStorage.displayTimezone`.  If none exists, we
+      // default to the last synchronization timezone (`lastSyncTimezone`)
+      // which is maintained independently of the display timezone.  If even
+      // that is not set, fall back to any legacy `lastUsedTimezone` (from
+      // older versions of the app), and finally to "Europe/Warsaw".  This
+      // logic ensures that opening a new tab does not adopt the display
+      // timezone chosen in another tab while still preserving the last
+      // synchronized baseline.
       const savedTz = savedDisplay || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
       timezoneSelect.value = savedTz;
       timezoneSelect.addEventListener("change", () => {
-        // Store the chosen display timezone in sessionStorage only (per-tab),
-        // leaving localStorage untouched so other tabs are not affected.
+        // When the user selects a different display timezone, persist it in
+        // `sessionStorage.displayTimezone` so that this tab remembers its
+        // choice across reloads.  We intentionally avoid writing to
+        // localStorage here to prevent propagating the change to other
+        // open tabs.  Changing the display timezone does not trigger a
+        // re-synchronization; it simply recalculates the displayed time.
         sessionStorage.setItem("displayTimezone", timezoneSelect.value);
-        // Keep the current synchronization but do not re-sync on display zone change.
-        updateClock(); // Force immediate update on timezone change
+        // Recompute timer targets from stored ISO values for the new display timezone
+        recomputeTargetsForTz(timezoneSelect.value);
+        lastTargetsTz = timezoneSelect.value;
+        updateClock(); // Immediately reflect the new timezone in the UI
       });
       const timeSourceSelect = document.getElementById("timeSourceSelect");
       const ntpInput = document.getElementById("ntpServerInput");
@@ -1015,25 +1121,65 @@ function computeBestFontSize(ids, maxWidth) {
 }
 
 function applyDefaultLayout() {
+  // Scale the 1080x1080 wrapper uniformly to the viewport
   scaleToFitWindow();
+
+  // Ensure the SVG ring is visible in graphics mode
   const svgEl = document.querySelector('#wrapper svg');
   if (svgEl) svgEl.style.display = 'block';
 
-  // --- Geometry of the ring (in base 1080 space) ---
-  const RING_RADIUS = 450;          // dots radius from SVG
-  const SAFETY_PAD = 26;            // px margin to stay clear of dots/ticks
-  const innerRadiusBase = RING_RADIUS - SAFETY_PAD; // inside of the ring
+  // Center time readout in wrapper space; font sizes are base values for 1080x1080
+  const out = document.getElementById('output');
+  if (out) {
+    out.style.top = '50%';
+    out.style.left = '50%';
+    out.style.fontSize = '120px';
+    out.style.letterSpacing = '-0.02em';
+    out.style.display = 'block';
+  }
 
-  // Screen scale of 1080x1080 square
-  const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1080);
-  const innerRadiusPx = innerRadiusBase * scale; // radius on screen in px
-  const viewCenterY = window.innerHeight / 2;    // center in viewport coords
+  // Date slightly below the center
+  const dateEl = document.getElementById('date');
+  if (dateEl) {
+    dateEl.style.top = '60%';
+    dateEl.style.left = '50%';
+    dateEl.style.fontSize = '50px';
+    dateEl.style.letterSpacing = '-0.01em';
+    dateEl.style.display = 'block';
+  }
 
-  // Hidden measurer for exact width
-  let measurer = document.getElementById('fit-measurer');
+  // Timer slots around the ring (percentages in wrapper space)
+  const slots = {
+    timer1: '15%',
+    timer2: '21%',
+    timer3: '27%',
+    timer4: '73%',
+    timer5: '79%',
+    timer6: '85%',
+  };
+
+  const visible = getVisibleTimerIds();
+  const baseTimerPx = 60; // base in 1080 space; scales with wrapper
+
+  // --- Prevent overlap with the minute ring by fitting to the inner chord ---
+  // Geometry in wrapper space (1080 × 1080):
+  // The ring of small dots has radius `radiusDots` (450). We keep a safety
+  // margin so text stays inside the ring at that vertical position.
+  const RING_RADIUS = typeof radiusDots === 'number' ? radiusDots : 450;
+  const SAFE_MARGIN = 90;                            // px inside the dot ring
+  const R_SAFE = Math.max(0, RING_RADIUS - SAFE_MARGIN); // inner safe radius
+
+  // Parse slot percents as numbers for geometry (centered at 50%)
+  const slotPerc = {
+    timer1: 15, timer2: 21, timer3: 27,
+    timer4: 73, timer5: 79, timer6: 85
+  };
+
+  // Hidden measurer for precise width checks
+  let measurer = document.getElementById('fit-measurer-default');
   if (!measurer) {
     measurer = document.createElement('div');
-    measurer.id = 'fit-measurer';
+    measurer.id = 'fit-measurer-default';
     measurer.style.position = 'absolute';
     measurer.style.left = '-99999px';
     measurer.style.top = '0';
@@ -1042,109 +1188,51 @@ function applyDefaultLayout() {
     document.body.appendChild(measurer);
   }
 
-  function textWidth(txt, weight, px) {
+  function textWidthAt(fontPx, text, weight) {
     measurer.style.fontFamily = "'NimbusSansL', sans-serif";
-    measurer.style.fontWeight = weight;
-    measurer.style.fontSize = px + 'px';
-    measurer.textContent = txt;
+    measurer.style.fontWeight = weight || 'normal';
+    measurer.style.fontSize = fontPx + 'px';
+    measurer.textContent = text || '';
     return measurer.scrollWidth;
   }
 
-  // Maximum usable chord width at a given vertical center (percent-of-viewport)
-  function chordWidthAtYPercent(yPercent) {
-    const y = (yPercent / 100) * window.innerHeight;
-    const dy = Math.abs(y - viewCenterY);
-    if (dy >= innerRadiusPx) return 0;
-    return 2 * Math.sqrt(innerRadiusPx * innerRadiusPx - dy * dy);
+  function allowedChordWidthFor(topPercent) {
+    // Translate the element's vertical center (percent) into Y relative to 1080 center
+    const cy = (topPercent / 100) * 1080;      // absolute Y
+    const yRel = cy - 540;                     // relative to center
+    // If outside the safe circle vertically, unlimited width (no overlap possible)
+    const inside = (R_SAFE * R_SAFE) - (yRel * yRel);
+    if (inside <= 0) return Infinity;
+    // Full chord width at that Y inside the safe circle
+    return 2 * Math.sqrt(inside);
   }
 
-  // Fit a line's font-size so that its real text width <= allowed chord width
-  function fitFontFor(el, yPercent, desiredPx, weight, sample) {
-    const maxW = Math.floor(chordWidthAtYPercent(yPercent) * 0.96); // 4% margin
-    if (maxW <= 0) return 0;
-    const text = (el.innerText && el.innerText.trim()) || sample;
-    let lo = 12, hi = Math.max(12, desiredPx);
-    while (lo < hi) {
-      const mid = Math.floor((lo + hi + 1) / 2);
-      if (textWidth(text, weight, mid) <= maxW) lo = mid; else hi = mid - 1;
-    }
-    return lo;
-  }
-
-  // Elements
-  const out = document.getElementById('output');
-  const dateEl = document.getElementById('date');
-
-  // --- Center clock (keep entirely inside inner circle) ---
-  // Place at exact center vertically
-  out.style.top = '50%';
-  // Find the max font that fits inside the inner circle diameter
-  const outDesired = 120;
-  const outSample = '88:88:88.88';
-  const outPx = fitFontFor(out, 50, outDesired, 'bold', outSample);
-  out.style.fontSize = Math.max(36, outPx) + 'px';
-
-  // Date sits below the center but still inside the ring
-  const dateY = 62; // %
-  dateEl.style.top = dateY + '%';
-  const dateDesired = 50;
-  const datePx = fitFontFor(dateEl, dateY, dateDesired, 'normal', '2025.09.01');
-  dateEl.style.fontSize = Math.max(20, datePx) + 'px';
-
-  // --- Lay out timers strictly inside the inner circle ---
-  const visible = getVisibleTimerIds();
-  const n = visible.length;
-  if (n === 0) {
-    // Hide timers if none are visible
-    ['timer1','timer2','timer3','timer4','timer5','timer6'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.style.display = 'none'; el.innerText = ''; }
-    });
-    return;
-  }
-
-  // Choose vertical bands well inside the ring so text never touches the dots
-  // Push a bit toward the center to increase chord width headroom.
-  const topBandStart = 18, topBandEnd = 32;      // % from top
-  const bottomBandStart = 68, bottomBandEnd = 82; // % from top
-
-  const topCount = Math.ceil(n / 2);
-  const bottomCount = n - topCount;
-
-  // Base desired timer size; will be individually shrunk to fit chord width
-  const baseTimerDesired = 60;
-
-  // Place top timers
-  for (let i = 0; i < topCount; i++) {
-    const id = visible[i];
+  Object.keys(slots).forEach(id => {
     const el = document.getElementById(id);
-    if (!el) continue;
-    const t = topCount === 1 ? (topBandStart + topBandEnd) / 2
-                              : topBandStart + (topBandEnd - topBandStart) * (i / (topCount - 1));
-    el.style.top = t + '%';
-    const px = fitFontFor(el, t, baseTimerDesired, 'normal', '-888:88:88');
-    el.style.fontSize = Math.max(28, px) + 'px';
-    el.style.display = 'block';
-  }
+    if (!el) return;
 
-  // Place bottom timers
-  for (let j = 0; j < bottomCount; j++) {
-    const id = visible[topCount + j];
-    const el = document.getElementById(id);
-    if (!el) continue;
-    const b = bottomCount === 1 ? (bottomBandStart + bottomBandEnd) / 2
-                                : bottomBandStart + (bottomBandEnd - bottomBandStart) * (j / (bottomCount - 1));
-    el.style.top = b + '%';
-    const px = fitFontFor(el, b, baseTimerDesired, 'normal', '-888:88:88');
-    el.style.fontSize = Math.max(28, px) + 'px';
-    el.style.display = 'block';
-  }
+    if (visible.includes(id)) {
+      el.style.top = slots[id];
+      el.style.left = '50%';
+      el.style.display = 'block';
+      el.style.letterSpacing = '-0.02em';
 
-  // Hide non-visible timers
-  ['timer1','timer2','timer3','timer4','timer5','timer6'].forEach(id => {
-    if (!visible.includes(id)) {
-      const el = document.getElementById(id);
-      if (el) { el.style.display = 'none'; el.innerText = ''; }
+      // Measure current text and fit to allowed chord width
+      const text = el.innerText || el.textContent || '';
+      const allowed = allowedChordWidthFor(slotPerc[id]); // in px (wrapper space)
+      let fontPx = baseTimerPx;
+
+      if (Number.isFinite(allowed)) {
+        const w = textWidthAt(fontPx, text, 'normal');
+        if (w > allowed) {
+          // Scale font down proportionally but keep a sensible minimum
+          const scaled = Math.max(22, Math.floor(fontPx * (allowed / w)));
+          fontPx = scaled;
+        }
+      }
+      el.style.fontSize = fontPx + 'px';
+    } else {
+      el.style.display = 'none';
     }
   });
 }
@@ -1165,8 +1253,12 @@ function applyMinimalLayout() {
   const timerIds = getVisibleTimerIds();
   const ids = [...timerIds, 'output', 'date'];
 
-  // Available area with tiny margins
-  const availW = Math.floor(window.innerWidth * 0.995);
+  // Available area with tiny margins.  Subtract the width of any visible
+  // control panels so the simple clock and timers occupy only the free
+  // horizontal space.  Without this adjustment the layout would shrink
+  // unnecessarily when a side panel is open.
+  const panelW = getVisiblePanelWidth();
+  const availW = Math.floor((window.innerWidth - panelW) * 0.995);
   const topMarginPx = Math.floor(window.innerHeight * 0.018);
   const bottomMarginPx = Math.floor(window.innerHeight * 0.018);
   const availH = window.innerHeight - topMarginPx - bottomMarginPx;
@@ -1301,12 +1393,16 @@ function applyLayout() {
 }
     // --- Timer control logic: set and reset timers based on form inputs ---
     document.getElementById("setTimers").addEventListener("click", () => {
-      timer1Target = toTargetUtcMillis("timer1Input");
-      timer2Target = toTargetUtcMillis("timer2Input");
-      timer3Target = toTargetUtcMillis("timer3Input");
-      timer4Target = toTargetUtcMillis("timer4Input");
-      timer5Target = toTargetUtcMillis("timer5Input");
-      timer6Target = toTargetUtcMillis("timer6Input");
+      timer1Iso = document.getElementById("timer1Input").value || null;
+      timer2Iso = document.getElementById("timer2Input").value || null;
+      timer3Iso = document.getElementById("timer3Input").value || null;
+      timer4Iso = document.getElementById("timer4Input").value || null;
+      timer5Iso = document.getElementById("timer5Input").value || null;
+      timer6Iso = document.getElementById("timer6Input").value || null;
+
+      const tz = sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
+      recomputeTargetsForTz(tz);
+      lastTargetsTz = tz;
 
       timer1Finished = false;
       timer2Finished = false;
@@ -1339,36 +1435,50 @@ function applyLayout() {
       document.getElementById("timer4").innerText = "";
       document.getElementById("timer5").innerText = "";
       document.getElementById("timer6").innerText = "";
+      timer1Iso = timer2Iso = timer3Iso = timer4Iso = timer5Iso = timer6Iso = null;
+      lastTargetsTz = null;
     });
 
     // Reset individual timers
     document.getElementById("resetTimer1").addEventListener("click", () => {
       timer1Target = null;
+      timer1Iso = null;
+      lastTargetsTz = null;
       timer1Finished = false;
       document.getElementById("timer1").innerText = "";
     });
     document.getElementById("resetTimer2").addEventListener("click", () => {
       timer2Target = null;
+      timer2Iso = null;
+      lastTargetsTz = null;
       timer2Finished = false;
       document.getElementById("timer2").innerText = "";
     });
     document.getElementById("resetTimer3").addEventListener("click", () => {
       timer3Target = null;
+      timer3Iso = null;
+      lastTargetsTz = null;
       timer3Finished = false;
       document.getElementById("timer3").innerText = "";
     });
     document.getElementById("resetTimer4").addEventListener("click", () => {
       timer4Target = null;
+      timer4Iso = null;
+      lastTargetsTz = null;
       timer4Finished = false;
       document.getElementById("timer4").innerText = "";
     });
     document.getElementById("resetTimer5").addEventListener("click", () => {
       timer5Target = null;
+      timer5Iso = null;
+      lastTargetsTz = null;
       timer5Finished = false;
       document.getElementById("timer5").innerText = "";
     });
     document.getElementById("resetTimer6").addEventListener("click", () => {
       timer6Target = null;
+      timer6Iso = null;
+      lastTargetsTz = null;
       timer6Finished = false;
       document.getElementById("timer6").innerText = "";
     });
@@ -1384,6 +1494,10 @@ function applyLayout() {
         const show = !isVisible;
         offsetControls.style.display = show ? 'block' : 'none';
         timerControls.style.display = show ? 'block' : 'none';
+        // Recompute scaling so the clock fits next to the panel.  Without
+        // recalculating the scale, the clock's size might lag behind the
+        // visibility state of the panels until a window resize occurs.
+        scaleToFitWindow();
         return;
       }
       // Toggle minimal mode: G
