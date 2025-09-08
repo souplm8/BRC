@@ -479,13 +479,15 @@
     window.toTargetUtcMillis = function(inputId) {
       const iso = document.getElementById(inputId).value; // "YYYY-MM-DDTHH:mm"
       if (!iso) return null;
-      const tz = localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
+      // Prefer per-tab display timezone stored in sessionStorage; fall back to the
+      // last synced timezone (for backward compatibility) or default Warsaw.
+      const tz = sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
       return luxon.DateTime.fromISO(iso, { zone: tz }).toUTC().toMillis();
     };
 
     // --- updateClock: Updates the main clock and timer displays ---
     function updateClock() {
-      const tz = localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
+      const tz = sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
       const nowUtc = Date.now() + timeOffset;
       const localNow = luxon.DateTime.fromMillis(nowUtc, { zone: "utc" }).setZone(tz);
 
@@ -669,7 +671,9 @@
         // Calculate and save offset between server and local time
         timeOffset = serverTime - Date.now();
         localStorage.setItem("lastValidOffset", timeOffset);
-        localStorage.setItem("lastUsedTimezone", tz);
+        // Persist the timezone used for synchronization separately from the display timezone.
+        // This prevents changes made in one tab from affecting the default display in other tabs.
+        localStorage.setItem("lastSyncTimezone", tz);
         updateClock(); // Force clock update after new offset
         status.textContent = "Ω";
         status.className = "ok";
@@ -811,12 +815,22 @@
 
     // --- Timezone and time source selector logic ---
     function initializeTimezone() {
-      const savedTz = localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
+      // Prefer the per-tab display timezone from sessionStorage; if absent, use the
+      // last synced timezone from localStorage for backward compatibility, falling
+      // back to the default Warsaw.  This ensures each tab can maintain its own
+      // display timezone without affecting other open tabs.
+      const savedDisplay = sessionStorage.getItem("displayTimezone");
+      // Fallback to the last synchronization timezone if available, then to the
+      // previously used display timezone.  This prevents a change in one tab
+      // from propagating to others and ensures new tabs default to the last
+      // synchronized timezone.
+      const savedTz = savedDisplay || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
       timezoneSelect.value = savedTz;
       timezoneSelect.addEventListener("change", () => {
-        localStorage.setItem("lastUsedTimezone", timezoneSelect.value);
-        // Keep the current synchronization but do not re-sync on display zone change
-        // Resynchronize only if the underlying offset may have drifted (handled elsewhere)
+        // Store the chosen display timezone in sessionStorage only (per-tab),
+        // leaving localStorage untouched so other tabs are not affected.
+        sessionStorage.setItem("displayTimezone", timezoneSelect.value);
+        // Keep the current synchronization but do not re-sync on display zone change.
         updateClock(); // Force immediate update on timezone change
       });
       const timeSourceSelect = document.getElementById("timeSourceSelect");
