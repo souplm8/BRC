@@ -241,7 +241,7 @@
       <input type="checkbox" id="minimalMode">
       <span class="slider"></span>
     </label>
-    <span>Tryb prosty (zegar + timery, bez grafiki)</span>
+    <span>Simple mode (clock + timers, no graphics)</span>
     <br>
     <label class="switch">
       <input type="checkbox" id="toggleAbout">
@@ -282,36 +282,7 @@
         <span class="slider"></span>
       </label>
       <span>Enable Timer 6</span><br>
-      <label class="switch">
-        <input type="checkbox" id="hideTimer1">
-        <span class="slider"></span>
-      </label>
-      <span>Hide Timer 1</span><br>
-      <label class="switch">
-        <input type="checkbox" id="hideTimer2">
-        <span class="slider"></span>
-      </label>
-      <span>Hide Timer 2</span><br>
-      <label class="switch">
-        <input type="checkbox" id="hideTimer3">
-        <span class="slider"></span>
-      </label>
-      <span>Hide Timer 3</span><br>
-      <label class="switch">
-        <input type="checkbox" id="hideTimer4">
-        <span class="slider"></span>
-      </label>
-      <span>Hide Timer 4</span><br>
-      <label class="switch">
-        <input type="checkbox" id="hideTimer5">
-        <span class="slider"></span>
-      </label>
-      <span>Hide Timer 5</span><br>
-      <label class="switch">
-        <input type="checkbox" id="hideTimer6">
-        <span class="slider"></span>
-      </label>
-      <span>Hide Timer 6</span><br>
+      <!-- Removed: Hide Timer checkboxes.  Enabling a timer now controls its visibility. -->
     </div>
     <hr>
     <div>
@@ -331,34 +302,34 @@
     </div>
     <hr>
     <div>
-      <strong>Etykiety timerów</strong><br>
-      <label for="labelTimer1">Timer 1 – etykieta:</label><br>
-      <input type="text" id="labelTimer1" placeholder="np. Pre-roll"><br>
-      <label for="labelTimer2">Timer 2 – etykieta:</label><br>
-      <input type="text" id="labelTimer2" placeholder="np. Start"><br>
-      <label for="labelTimer3">Timer 3 – etykieta:</label><br>
-      <input type="text" id="labelTimer3" placeholder="np. Goście"><br>
-      <label for="labelTimer4">Timer 4 – etykieta:</label><br>
-      <input type="text" id="labelTimer4" placeholder="np. Prezentacja"><br>
-      <label for="labelTimer5">Timer 5 – etykieta:</label><br>
-      <input type="text" id="labelTimer5" placeholder="np. Q&A"><br>
-      <label for="labelTimer6">Timer 6 – etykieta:</label><br>
-      <input type="text" id="labelTimer6" placeholder="np. Koniec"><br>
+      <strong>Timer labels</strong><br>
+      <label for="labelTimer1">Timer 1 – label:</label><br>
+      <input type="text" id="labelTimer1" placeholder="e.g. Pre-roll"><br>
+      <label for="labelTimer2">Timer 2 – label:</label><br>
+      <input type="text" id="labelTimer2" placeholder="e.g. Start"><br>
+      <label for="labelTimer3">Timer 3 – label:</label><br>
+      <input type="text" id="labelTimer3" placeholder="e.g. Guests"><br>
+      <label for="labelTimer4">Timer 4 – label:</label><br>
+      <input type="text" id="labelTimer4" placeholder="e.g. Presentation"><br>
+      <label for="labelTimer5">Timer 5 – label:</label><br>
+      <input type="text" id="labelTimer5" placeholder="e.g. Q&A"><br>
+      <label for="labelTimer6">Timer 6 – label:</label><br>
+      <input type="text" id="labelTimer6" placeholder="e.g. End"><br>
     </div>
     <hr>
     <div>
-      <strong>Progi kolorów</strong><br>
+      <strong>Color thresholds</strong><br>
       <label for="colorPreset">Preset:</label>
       <select id="colorPreset">
-        <option value="default" selected>Domyślne (15/5 min)</option>
-        <option value="short">Krótki (5/2 min)</option>
-        <option value="long">Długi (30/10 min)</option>
-        <option value="xl">Bardzo długi (60/15 min)</option>
-        <option value="custom">Niestandardowe</option>
+        <option value="default" selected>Default (15/5 min)</option>
+        <option value="short">Short (5/2 min)</option>
+        <option value="long">Long (30/10 min)</option>
+        <option value="xl">Very long (60/15 min)</option>
+        <option value="custom">Custom</option>
       </select><br>
       <div id="customThresholds" style="display:none; margin-top:6px;">
-        <label>Pomarańczowy (min): <input type="number" id="orangeMin" min="0" value="15" style="width:80px;"></label><br>
-        <label>Czerwony (min): <input type="number" id="redMin" min="0" value="5" style="width:80px;"></label>
+        <label>Orange (min): <input type="number" id="orangeMin" min="0" value="15" style="width:80px;"></label><br>
+        <label>Red (min): <input type="number" id="redMin" min="0" value="5" style="width:80px;"></label>
       </div>
     </div>
     <div>
@@ -594,7 +565,7 @@
       }
 
       // --- Timer visibility and activation logic ---
-      if (timer1Target !== null && document.getElementById("enableTimer1").checked && !document.getElementById("hideTimer1").checked) {
+      if (timer1Target !== null && document.getElementById("enableTimer1").checked) {
         const el = document.getElementById("timer1");
         if (el) el.style.display = "block";
         updateTimer(timer1Target, "timer1", "timer1Finished");
@@ -604,7 +575,7 @@
         t1.style.color = "white";
         t1.style.display = "none";
       }
-      if (timer2Target !== null && document.getElementById("enableTimer2").checked && !document.getElementById("hideTimer2").checked) {
+      if (timer2Target !== null && document.getElementById("enableTimer2").checked) {
         const el = document.getElementById("timer2");
         if (el) el.style.display = "block";
         updateTimer(timer2Target, "timer2", "timer2Finished");
@@ -614,7 +585,7 @@
         t2.style.color = "white";
         t2.style.display = "none";
       }
-      if (timer3Target !== null && document.getElementById("enableTimer3").checked && !document.getElementById("hideTimer3").checked) {
+      if (timer3Target !== null && document.getElementById("enableTimer3").checked) {
         const el = document.getElementById("timer3");
         if (el) el.style.display = "block";
         updateTimer(timer3Target, "timer3", "timer3Finished");
@@ -624,7 +595,7 @@
         t3.style.color = "white";
         t3.style.display = "none";
       }
-      if (timer4Target !== null && document.getElementById("enableTimer4").checked && !document.getElementById("hideTimer4").checked) {
+      if (timer4Target !== null && document.getElementById("enableTimer4").checked) {
         const el = document.getElementById("timer4");
         if (el) el.style.display = "block";
         updateTimer(timer4Target, "timer4", "timer4Finished");
@@ -636,7 +607,7 @@
       }
       applyLayout();
       // Timer 5
-      if (timer5Target !== null && document.getElementById("enableTimer5").checked && !document.getElementById("hideTimer5").checked) {
+      if (timer5Target !== null && document.getElementById("enableTimer5").checked) {
         const el = document.getElementById("timer5");
         if (el) el.style.display = "block";
         updateTimer(timer5Target, "timer5", "timer5Finished");
@@ -647,7 +618,7 @@
         t5.style.display = "none";
       }
       // Timer 6
-      if (timer6Target !== null && document.getElementById("enableTimer6").checked && !document.getElementById("hideTimer6").checked) {
+      if (timer6Target !== null && document.getElementById("enableTimer6").checked) {
         const el = document.getElementById("timer6");
         if (el) el.style.display = "block";
         updateTimer(timer6Target, "timer6", "timer6Finished");
@@ -980,12 +951,12 @@ if (minimalModeCheckbox) minimalModeCheckbox.addEventListener("change", () => {
     // --- Layout management for simple (minimal) mode ---
 function getVisibleTimerIds() {
   const ids = [];
-  if (timer1Target !== null && document.getElementById("enableTimer1").checked && !document.getElementById("hideTimer1").checked) ids.push("timer1");
-  if (timer2Target !== null && document.getElementById("enableTimer2").checked && !document.getElementById("hideTimer2").checked) ids.push("timer2");
-  if (timer3Target !== null && document.getElementById("enableTimer3").checked && !document.getElementById("hideTimer3").checked) ids.push("timer3");
-  if (timer4Target !== null && document.getElementById("enableTimer4").checked && !document.getElementById("hideTimer4").checked) ids.push("timer4");
-  if (timer5Target !== null && document.getElementById("enableTimer5").checked && !document.getElementById("hideTimer5").checked) ids.push("timer5");
-  if (timer6Target !== null && document.getElementById("enableTimer6").checked && !document.getElementById("hideTimer6").checked) ids.push("timer6");
+  if (timer1Target !== null && document.getElementById("enableTimer1").checked) ids.push("timer1");
+  if (timer2Target !== null && document.getElementById("enableTimer2").checked) ids.push("timer2");
+  if (timer3Target !== null && document.getElementById("enableTimer3").checked) ids.push("timer3");
+  if (timer4Target !== null && document.getElementById("enableTimer4").checked) ids.push("timer4");
+  if (timer5Target !== null && document.getElementById("enableTimer5").checked) ids.push("timer5");
+  if (timer6Target !== null && document.getElementById("enableTimer6").checked) ids.push("timer6");
   return ids;
 }
 
