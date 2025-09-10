@@ -1,4 +1,4 @@
-# HTML BIG RED CLOCK with support fot timeapi.io and local NTP Proxy Server
+# HTML BIG RED CLOCK with support for timeapi.io and local NTP Proxy Server
 
 🕒 BIG RED CLOCK – Local Time Server (time_server.py)
 
