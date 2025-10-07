@@ -166,12 +166,8 @@
     <img id="logo" src="media/logo.png" alt="Logo" onerror="this.style.display='none';" />
     <div id="output"></div>
     <div id="date"></div>
-    <div id="timer1" class="timer" style="top:15%;"></div>
-    <div id="timer2" class="timer" style="top:21%;"></div>
-    <div id="timer3" class="timer" style="top:27%;"></div>
-    <div id="timer4" class="timer" style="top:73%;"></div>
-    <div id="timer5" class="timer" style="top:79%;"></div>
-    <div id="timer6" class="timer" style="top:85%;"></div>
+    <!-- Timers are now generated dynamically -->
+    <div id="timers-container"></div>
     <div id="sync-status"></div>
   </div>
 
@@ -251,71 +247,11 @@
   </div>
   <div id="timer-controls" style="position:fixed; top:240px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10000; display:none; text-align: center;">
     <div>
-      <strong>Visibility and Activation</strong><br>
-      <label class="switch">
-        <input type="checkbox" id="enableTimer1" checked>
-        <span class="slider"></span>
-      </label>
-      <span>Enable Timer 1</span><br>
-      <label class="switch">
-        <input type="checkbox" id="enableTimer2" checked>
-        <span class="slider"></span>
-      </label>
-      <span>Enable Timer 2</span><br>
-      <label class="switch">
-        <input type="checkbox" id="enableTimer3" checked>
-        <span class="slider"></span>
-      </label>
-      <span>Enable Timer 3</span><br>
-      <label class="switch">
-        <input type="checkbox" id="enableTimer4" checked>
-        <span class="slider"></span>
-      </label>
-      <span>Enable Timer 4</span><br>
-      <label class="switch">
-        <input type="checkbox" id="enableTimer5" checked>
-        <span class="slider"></span>
-      </label>
-      <span>Enable Timer 5</span><br>
-      <label class="switch">
-        <input type="checkbox" id="enableTimer6" checked>
-        <span class="slider"></span>
-      </label>
-      <span>Enable Timer 6</span><br>
-      <!-- Removed: Hide Timer checkboxes.  Enabling a timer now controls its visibility. -->
+      <strong>Timers</strong><br>
+      <button id="addTimer">Add Timer</button>
+      <button id="resetTimers" style="margin-left:6px;">Reset All Timers</button>
     </div>
-    <hr>
-    <div>
-      <strong>Set Time</strong><br>
-      <label for="timer1Input">Timer 1 (date and time):</label><br>
-      <input type="datetime-local" id="timer1Input"><br>
-      <label for="timer2Input">Timer 2 (date and time):</label><br>
-      <input type="datetime-local" id="timer2Input"><br>
-      <label for="timer3Input">Timer 3 (date and time):</label><br>
-      <input type="datetime-local" id="timer3Input"><br>
-      <label for="timer4Input">Timer 4 (date and time):</label><br>
-      <input type="datetime-local" id="timer4Input"><br>
-      <label for="timer5Input">Timer 5 (date and time):</label><br>
-      <input type="datetime-local" id="timer5Input"><br>
-      <label for="timer6Input">Timer 6 (date and time):</label><br>
-      <input type="datetime-local" id="timer6Input"><br>
-    </div>
-    <hr>
-    <div>
-      <strong>Timer labels</strong><br>
-      <label for="labelTimer1">Timer 1 – label:</label><br>
-      <input type="text" id="labelTimer1" placeholder="e.g. Pre-roll"><br>
-      <label for="labelTimer2">Timer 2 – label:</label><br>
-      <input type="text" id="labelTimer2" placeholder="e.g. Start"><br>
-      <label for="labelTimer3">Timer 3 – label:</label><br>
-      <input type="text" id="labelTimer3" placeholder="e.g. Guests"><br>
-      <label for="labelTimer4">Timer 4 – label:</label><br>
-      <input type="text" id="labelTimer4" placeholder="e.g. Presentation"><br>
-      <label for="labelTimer5">Timer 5 – label:</label><br>
-      <input type="text" id="labelTimer5" placeholder="e.g. Q&A"><br>
-      <label for="labelTimer6">Timer 6 – label:</label><br>
-      <input type="text" id="labelTimer6" placeholder="e.g. End"><br>
-    </div>
+    <div id="timersList" style="margin-top:8px; text-align:left;"></div>
     <hr>
     <div>
       <strong>Color thresholds</strong><br>
@@ -332,1217 +268,788 @@
         <label>Red (min): <input type="number" id="redMin" min="0" value="5" style="width:80px;"></label>
       </div>
     </div>
-    <div>
-      <strong>Actions</strong><br>
-      <button id="setTimers">Set Timers</button><br><br>
-      <button id="resetTimers">Reset All Timers</button><br><br>
-      <button id="resetTimer1">Reset Timer 1</button><br>
-      <button id="resetTimer2">Reset Timer 2</button><br>
-      <button id="resetTimer3">Reset Timer 3</button><br>
-      <button id="resetTimer4">Reset Timer 4</button><br>
-      <button id="resetTimer5">Reset Timer 5</button><br>
-      <button id="resetTimer6">Reset Timer 6</button>
-    </div>
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-    // --- SVG Dots and Ticks Initialization ---
-    // Create SVG elements for the clock's second dots and minute ticks
-    const svgDots = document.getElementById('dots');
-    const svgTicks = document.getElementById('ticks');
-    const radiusDots = 450;
-    const radiusTicks = 480;
-    const dots = [];
+document.addEventListener("DOMContentLoaded", function () {
+  // --- SVG Dots and Ticks Initialization (bez zmian wizualnych) ---
+  const svgDots = document.getElementById('dots');
+  const svgTicks = document.getElementById('ticks');
+  const radiusDots = 450;
+  const radiusTicks = 480;
+  const dots = [];
 
-    // Draw large ticks for every 5 minutes (12 ticks)
-    for (let i = 0; i < 60; i += 5) {
-      const angle = (i * 6) * Math.PI / 180;
-      const x = radiusTicks * Math.cos(angle);
-      const y = radiusTicks * Math.sin(angle);
-      const tick = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      tick.setAttribute("cx", x);
-      tick.setAttribute("cy", y);
-      tick.setAttribute("r", 10);
-      tick.setAttribute("fill", "red");
-      svgTicks.appendChild(tick);
-    }
-
-    // Draw 60 small dots for each second
-    for (let i = 0; i < 60; i++) {
-      const angle = (i * 6) * Math.PI / 180;
-      const x = radiusDots * Math.cos(angle);
-      const y = radiusDots * Math.sin(angle);
-      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      circle.setAttribute("cx", x);
-      circle.setAttribute("cy", y);
-      circle.setAttribute("r", 5);
-      circle.setAttribute("fill", "red");
-      svgDots.appendChild(circle);
-      dots.push(circle);
-    }
-
-    // --- Time synchronization and timer variables ---
-    //
-    // `timeOffset` stores the difference (in milliseconds) between the local
-    // system clock (`Date.now()`) and the last successfully synchronized
-    // server time.  This offset is applied every time the clock is updated
-    // so that even if the user's system clock drifts, the displayed time
-    // remains accurate.  The value is persisted in localStorage under
-    // `lastValidOffset` and reloaded on page initialization.
-    let timeOffset = Number(localStorage.getItem("lastValidOffset")) || 0;
-    // Target times for the countdown timers (ms since epoch)
-    let timer1Target = null;
-    let timer2Target = null;
-    let timer3Target = null;
-    let timer4Target = null;
-    let timer5Target = null;
-    let timer6Target = null;
-
-    // Raw ISO strings (from inputs) used to re-compute targets when timezone changes
-    let timer1Iso = null;
-    let timer2Iso = null;
-    let timer3Iso = null;
-    let timer4Iso = null;
-    let timer5Iso = null;
-    let timer6Iso = null;
-
-    // Track which display timezone was last used to compute targets
-    let lastTargetsTz = null;
-    // Flags to track if each timer has finished
-    let timer1Finished = false;
-    let timer2Finished = false;
-    let timer3Finished = false;
-    let timer4Finished = false;
-    let timer5Finished = false;
-    let timer6Finished = false;
-    let lastSecond = -1;
-
-    // --- Global color thresholds (minutes) and preset ---
-    let warnOrangeMin = Number(localStorage.getItem('warnOrangeMin')) || 15;
-    let warnRedMin = Number(localStorage.getItem('warnRedMin')) || 5;
-    let colorPreset = localStorage.getItem('colorPreset') || 'default';
-
-    // --- Definition of common zones and their fixed abbreviations for the
-    // difference grid.  Each entry specifies the IANA zone identifier and
-    // the preferred abbreviation to display.  These abbreviations are
-    // deliberately fixed (EST, CST, etc.) to provide a familiar reference
-    // independent of daylight saving time.  The difference grid uses
-    // these abbreviations alongside the relative offset to the selected
-    // display timezone.
-    const tzAbbrList = [
-      { zone: 'Europe/Warsaw', abbr: 'CET' },          // Central European Time (Warsaw)
-      { zone: 'America/New_York', abbr: 'EST' },       // Eastern Time (New York)
-      { zone: 'America/Chicago', abbr: 'CST' },        // Central Time (Chicago)
-      { zone: 'America/Los_Angeles', abbr: 'PST' },    // Pacific Time (Los Angeles)
-      { zone: 'UTC', abbr: 'UTC' },                    // Coordinated Universal Time
-      { zone: 'Asia/Kolkata', abbr: 'IST' },           // India Standard Time
-      { zone: 'America/Denver', abbr: 'MST' },         // Mountain Time (Denver)
-      { zone: 'Etc/GMT', abbr: 'GMT' },                // Greenwich Mean Time
-      { zone: 'Europe/Bucharest', abbr: 'EET' },       // Eastern European Time
-      { zone: 'Europe/London', abbr: 'BST' },          // British Time (London)
-      { zone: 'Australia/Sydney', abbr: 'AEDT' },      // Australian Eastern Daylight Time
-      { zone: 'Europe/Berlin', abbr: 'CEST' },         // Central European Summer Time (Berlin)
-      { zone: 'America/Halifax', abbr: 'AST' },        // Atlantic Standard Time
-      { zone: 'Asia/Singapore', abbr: 'SGT' },         // Singapore Time
-      { zone: 'Asia/Dubai', abbr: 'GST' },             // Gulf Standard Time
-      { zone: 'Australia/Perth', abbr: 'AWST' },       // Australian Western Standard Time
-      { zone: 'Asia/Shanghai', abbr: 'CST-CH' },       // China Standard Time
-      { zone: 'America/Adak', abbr: 'HDT' },           // Hawaii-Aleutian Daylight Time (Adak)
-      { zone: 'Asia/Hong_Kong', abbr: 'HKT' },         // Hong Kong Time
-      { zone: 'Pacific/Honolulu', abbr: 'HST' },       // Hawaii Standard Time
-      { zone: 'Asia/Jerusalem', abbr: 'IDT' },         // Israel Daylight Time
-      { zone: 'Asia/Bangkok', abbr: 'ICT' },           // Indochina Time
-      { zone: 'Asia/Tokyo', abbr: 'JST' },             // Japan Standard Time
-      { zone: 'Asia/Seoul', abbr: 'KST' },             // Korea Standard Time
-      { zone: 'Europe/Moscow', abbr: 'MSK' },          // Moscow Standard Time
-      { zone: 'Asia/Manila', abbr: 'PHT' },            // Philippine Time
-      { zone: 'Africa/Johannesburg', abbr: 'SAST' },   // South Africa Standard Time
-      { zone: 'Asia/Karachi', abbr: 'PKT' },           // Pakistan Standard Time
-      { zone: 'Africa/Nairobi', abbr: 'EAT' },         // East Africa Time
-      { zone: 'America/Havana', abbr: 'CST-CU' },      // Cuba Standard Time
-      { zone: 'Pacific/Auckland', abbr: 'NZST' },      // New Zealand Standard Time
-      { zone: 'Asia/Kuala_Lumpur', abbr: 'MYT' },      // Malaysia Time
-      { zone: 'America/Sao_Paulo', abbr: 'BRT' },      // Brazil Time (São Paulo)
-      { zone: 'America/Anchorage', abbr: 'AKST' },     // Alaska Standard Time
-      { zone: 'America/Santiago', abbr: 'CLT' },       // Chile Standard Time
-      { zone: 'America/Montevideo', abbr: 'UYT' },     // Uruguay Time
-      { zone: 'Europe/Lisbon', abbr: 'WET' }           // Western European Time
-    ];
-
-    // Returns a fixed abbreviation for a given IANA zone ID if it exists in the
-    // tzAbbrList above.  If no fixed abbreviation is defined, it falls back to
-    // Luxon's short offset name for that zone at the current time.  This helper
-    // is used to append clear, familiar abbreviations (e.g., CET) to timezone
-    // labels in the dropdown without relying solely on dynamic DST names like CEST.
-    function getFixedAbbr(zoneId) {
-      const entry = tzAbbrList.find(e => e.zone === zoneId);
-      if (entry) return entry.abbr;
-      try {
-        const dt = luxon.DateTime.now().setZone(zoneId);
-        return dt.offsetNameShort || '';
-      } catch (e) {
-        return '';
-      }
-    }
-
-
-    function getTimerLabel(elementId) {
-      const key = 'label_' + elementId; // e.g., label_timer1
-      return localStorage.getItem(key) || '';
-    }
-
-    // --- Global helper: parse datetime-local input in the selected timezone to UTC millis ---
-    window.toTargetUtcMillis = function(inputId) {
-      // Read the value of a <input type="datetime-local"> and convert it to a
-      // UTC timestamp (milliseconds since epoch).  The input value is assumed
-      // to be in the current display timezone.  We first look up the
-      // per-tab display timezone stored in `sessionStorage.displayTimezone`.
-      // If there is no per-tab setting (e.g. on a fresh tab), we fall back
-      // to the last synchronization timezone stored in `lastSyncTimezone`,
-      // then to any legacy `lastUsedTimezone`, and finally to the default
-      // "Europe/Warsaw".  Converting via Luxon ensures daylight-saving rules
-      // are applied correctly for the chosen zone.
-      const iso = document.getElementById(inputId).value; // "YYYY-MM-DDTHH:mm"
-      if (!iso) return null;
-      const tz = sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
-      return luxon.DateTime.fromISO(iso, { zone: tz }).toUTC().toMillis();
-    };
-
-    // Convert an ISO string to UTC millis using provided tz or current display tz
-    window.isoToUtcMillis = function(iso, tzOpt) {
-      if (!iso) return null;
-      const tz = tzOpt || (sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw");
-      return luxon.DateTime.fromISO(iso, { zone: tz }).toUTC().toMillis();
-    };
-
-    // Recompute all timer targets from stored ISO strings for a given display timezone
-    function recomputeTargetsForTz(tz) {
-      timer1Target = timer1Iso ? isoToUtcMillis(timer1Iso, tz) : null;
-      timer2Target = timer2Iso ? isoToUtcMillis(timer2Iso, tz) : null;
-      timer3Target = timer3Iso ? isoToUtcMillis(timer3Iso, tz) : null;
-      timer4Target = timer4Iso ? isoToUtcMillis(timer4Iso, tz) : null;
-      timer5Target = timer5Iso ? isoToUtcMillis(timer5Iso, tz) : null;
-      timer6Target = timer6Iso ? isoToUtcMillis(timer6Iso, tz) : null;
-    }
-
-    // --- updateClock: Updates the main clock and timer displays ---
-    function updateClock() {
-      // Determine which timezone to use when displaying the clock.  We read
-      // the per-tab display timezone from sessionStorage so that each open
-      // tab can have its own independent setting.  If none is set, fall
-      // back to the timezone used for the last successful synchronization
-      // (`lastSyncTimezone`), or to any legacy `lastUsedTimezone`, then to
-      // the default "Europe/Warsaw".  This design prevents a change in one
-      // tab from propagating to others via localStorage.
-      const tz = sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
-      // If the display timezone changed since the last target computation, rebuild targets
-      if (tz !== lastTargetsTz) {
-        recomputeTargetsForTz(tz);
-        lastTargetsTz = tz;
-      }
-      const nowUtc = Date.now() + timeOffset;
-      const localNow = luxon.DateTime.fromMillis(nowUtc, { zone: "utc" }).setZone(tz);
-
-      const hours = String(localNow.hour).padStart(2, '0');
-      const minutes = String(localNow.minute).padStart(2, '0');
-      const seconds = String(localNow.second).padStart(2, '0');
-      const centiseconds = String(Math.floor(localNow.millisecond / 10)).padStart(2, '0');
-
-      document.getElementById("output").innerText = `${hours}:${minutes}:${seconds}.${centiseconds}`;
-
-      const year = localNow.year;
-      const month = String(localNow.month).padStart(2, '0');
-      const day = String(localNow.day).padStart(2, '0');
-      document.getElementById("date").innerText = `${year}.${month}.${day}`;
-
-      // Detect DST transitions: if the offset of the currently selected timezone
-      // changes relative to the last known offset, refresh the labels in the
-      // dropdown.  Luxon automatically applies daylight saving rules when
-      // converting to a zone, so comparing offsets allows us to refresh the
-      // displayed UTC offsets.  Without this, the list would continue to
-      // display the old offset across DST transitions.
-      try {
-        const currentOffset = localNow.offset;
-        if (currentTzOffsetForSavedZone === null || currentOffset !== currentTzOffsetForSavedZone) {
-          currentTzOffsetForSavedZone = currentOffset;
-          refreshTimezoneLabels();
-        }
-      } catch (e) {
-        // ignore offset check errors
-      }
-
-      // Update second dots only when the second changes
-      if (localNow.second !== lastSecond) {
-        for (let i = 0; i < 60; i++) {
-          dots[i].setAttribute("fill", i <= localNow.second ? "red" : "black");
-        }
-        lastSecond = localNow.second;
-        // No longer refresh a difference grid here; abbreviations are handled directly in the dropdown.
-      }
-
-      // --- updateTimer helper using synced UTC ---
-      function updateTimer(targetUtc, elementId, finishedFlagName) {
-        const el = document.getElementById(elementId);
-        if (!el || targetUtc == null) return;
-
-        let diff = targetUtc - nowUtc; // diff relative to synced UTC time
-        const isFuture = diff > 0;
-        const abs = Math.abs(diff);
-
-        // Avoid showing :60 by using ceil for future, floor for past
-        const totalSec = isFuture ? Math.ceil(abs / 1000) : Math.floor(abs / 1000);
-        const h = Math.floor(totalSec / 3600);
-        const m = Math.floor((totalSec % 3600) / 60);
-        const s = totalSec % 60;
-
-        const label = getTimerLabel(elementId);
-        const sign = isFuture ? '-' : '+';
-        const timeText = `${sign}${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        if (label) {
-          el.innerHTML = `<span class="label">${label}</span><span class="value">${timeText}</span>`;
-        } else {
-          el.innerText = timeText;
-        }
-
-        if (isFuture) {
-          if (abs <= warnRedMin * 60 * 1000) {
-            el.style.color = 'red';
-          } else if (abs <= warnOrangeMin * 60 * 1000) {
-            el.style.color = 'orange';
-          } else {
-            el.style.color = 'white';
-          }
-        } else {
-          el.style.color = 'lime';
-          if (!window[finishedFlagName]) window[finishedFlagName] = true;
-        }
-      }
-
-      // --- Timer visibility and activation logic ---
-      if (timer1Target !== null && document.getElementById("enableTimer1").checked) {
-        const el = document.getElementById("timer1");
-        if (el) el.style.display = "block";
-        updateTimer(timer1Target, "timer1", "timer1Finished");
-      } else {
-        const t1 = document.getElementById("timer1");
-        t1.innerText = "";
-        t1.style.color = "white";
-        t1.style.display = "none";
-      }
-      if (timer2Target !== null && document.getElementById("enableTimer2").checked) {
-        const el = document.getElementById("timer2");
-        if (el) el.style.display = "block";
-        updateTimer(timer2Target, "timer2", "timer2Finished");
-      } else {
-        const t2 = document.getElementById("timer2");
-        t2.innerText = "";
-        t2.style.color = "white";
-        t2.style.display = "none";
-      }
-      if (timer3Target !== null && document.getElementById("enableTimer3").checked) {
-        const el = document.getElementById("timer3");
-        if (el) el.style.display = "block";
-        updateTimer(timer3Target, "timer3", "timer3Finished");
-      } else {
-        const t3 = document.getElementById("timer3");
-        t3.innerText = "";
-        t3.style.color = "white";
-        t3.style.display = "none";
-      }
-      if (timer4Target !== null && document.getElementById("enableTimer4").checked) {
-        const el = document.getElementById("timer4");
-        if (el) el.style.display = "block";
-        updateTimer(timer4Target, "timer4", "timer4Finished");
-      } else {
-        const t4 = document.getElementById("timer4");
-        t4.innerText = "";
-        t4.style.color = "white";
-        t4.style.display = "none";
-      }
-      applyLayout();
-      // Timer 5
-      if (timer5Target !== null && document.getElementById("enableTimer5").checked) {
-        const el = document.getElementById("timer5");
-        if (el) el.style.display = "block";
-        updateTimer(timer5Target, "timer5", "timer5Finished");
-      } else {
-        const t5 = document.getElementById("timer5");
-        t5.innerText = "";
-        t5.style.color = "white";
-        t5.style.display = "none";
-      }
-      // Timer 6
-      if (timer6Target !== null && document.getElementById("enableTimer6").checked) {
-        const el = document.getElementById("timer6");
-        if (el) el.style.display = "block";
-        updateTimer(timer6Target, "timer6", "timer6Finished");
-      } else {
-        const t6 = document.getElementById("timer6");
-        t6.innerText = "";
-        t6.style.color = "white";
-        t6.style.display = "none";
-      }
-    }
-
-    // --- synchronizeTime: Fetches time from API or local NTP proxy and sets timeOffset ---
-    async function synchronizeTime() {
-      const status = document.getElementById("sync-status");
-      const source = document.getElementById("timeSourceSelect").value;
-      const timezoneSelect = document.getElementById("timezoneSelect");
-      const tz = timezoneSelect.value || "Europe/Warsaw";
-      const minimalModeCheckbox = document.getElementById("minimalMode");
-
-      try {
-        let serverTime;
-
-        if (source === "api") {
-          // Use configured API base or default
-          let apiBase = document.getElementById("apiServerInput").value.trim() || localStorage.getItem("apiServer") || "https://timeapi.io";
-          localStorage.setItem("apiServer", apiBase);
-          const response = await fetch(`${apiBase}/api/Time/current/zone?timeZone=${encodeURIComponent(tz)}`);
-          if (!response.ok) throw new Error("API time fetch error");
-          const data = await response.json();
-          serverTime = new Date(data.dateTime).getTime();
-        } else if (source === "ntp") {
-          // Use local NTP proxy server for time synchronization
-          const ntpAddr = document.getElementById("ntpServerInput").value.trim();
-          if (!ntpAddr) throw new Error("No NTP server address set");
-
-          const base = document.getElementById("apiServerInput").value.trim();
-          if (!base) throw new Error("No API server address set");
-          if (!/^https?:\/\//i.test(base)) throw new Error("API server must include http(s)://");
-
-          const response = await fetch(`${base}/api/time?ntp=${encodeURIComponent(ntpAddr)}`);
-          if (!response.ok) throw new Error("Local time fetch error");
-          const data = await response.json();
-          // Convert the UTC time from the server
-          const utc = luxon.DateTime.fromISO(data.utc, { zone: "utc" });
-          serverTime = utc.toMillis(); // keep UTC
-        }
-
-        // Calculate and save offset between server and local time
-        timeOffset = serverTime - Date.now();
-        localStorage.setItem("lastValidOffset", timeOffset);
-        // Persist the timezone used for synchronization separately from the display
-        // timezone.  Storing under `lastSyncTimezone` allows the application
-        // to remember which zone was used to compute the current `timeOffset`
-        // while keeping the per-tab display timezone (stored in sessionStorage)
-        // independent.  This prevents a change in one tab from altering the
-        // initial display in another tab.
-        localStorage.setItem("lastSyncTimezone", tz);
-        updateClock(); // Force clock update after new offset
-        status.textContent = "Ω";
-        status.className = "ok";
-      } catch (err) {
-        // Show error if time sync fails
-        console.error("Time sync failed:", err);
-        status.textContent = "Ω";
-        status.className = "error";
-      }
-    }
-
-    // --- Timer and clock update intervals ---
-    function loop() {
-      updateClock();
-      requestAnimationFrame(loop);
-    }
-    requestAnimationFrame(loop);
-    synchronizeTime();
-    setInterval(synchronizeTime, 300000); // Resync every 5 minutes
-
-    // Helper: current minimal mode state (works even before checkbox is wired)
-    function isMinimalMode() {
-      const cb = document.getElementById('minimalMode');
-      const saved = localStorage.getItem('minimalMode') === '1';
-      return cb ? cb.checked : saved;
-    }
-
-    // --- Helper: compute width occupied by visible control panels ---
-    // When either the timezone/offset panel or the timer panel is visible, they
-    // occupy fixed space on the right side of the viewport.  In non‑minimal
-    // mode we need to subtract this width so the clock scales only within
-    // the remaining horizontal space.  This helper inspects both panels and
-    // returns the maximum width of any visible panel; if both panels are
-    // hidden, it returns 0.
-    function getVisiblePanelWidth() {
-      let maxW = 0;
-      // Look up controls on demand so we don't rely on capture order.  Each
-      // call retrieves the element fresh from the DOM, ensuring that we
-      // measure the current width after any dynamic content changes.
-      const oc = document.getElementById('offset-controls');
-      const tc = document.getElementById('timer-controls');
-      // Only count panels that are currently displayed (block).  Other
-      // display values (none) or undefined are ignored.
-      if (oc && oc.style.display === 'block') {
-        // Include right margin (distance from viewport edge) when subtracting
-        // panel width.  Read computed style to account for inline CSS values.
-        const ocStyles = window.getComputedStyle(oc);
-        const right = parseInt(ocStyles.right || '0', 10) || 0;
-        maxW = Math.max(maxW, oc.offsetWidth + right);
-      }
-      if (tc && tc.style.display === 'block') {
-        const tcStyles = window.getComputedStyle(tc);
-        const right = parseInt(tcStyles.right || '0', 10) || 0;
-        maxW = Math.max(maxW, tc.offsetWidth + right);
-      }
-      return maxW;
-    }
-
-    // --- scaleToFitWindow: adapt the 1080px clock to available space ---
-    function scaleToFitWindow() {
-      const wrapper = document.getElementById('wrapper');
-      if (!wrapper) return;
-
-      if (isMinimalMode()) {
-        // Detach from 1080x1080 square and fill the viewport
-        wrapper.style.transform = 'none';
-        wrapper.style.width = window.innerWidth + 'px';
-        wrapper.style.height = window.innerHeight + 'px';
-        wrapper.style.left = '0px';
-        wrapper.style.top = '0px';
-      } else {
-        // In graphics mode the clock lives in a fixed 1080x1080 square.
-        // Scale it uniformly based on whichever screen dimension is smaller.
-        wrapper.style.width = '1080px';
-        wrapper.style.height = '1080px';
-        const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1080);
-        wrapper.style.transform = `scale(${scale})`;
-        wrapper.style.left = `${(window.innerWidth - 1080 * scale) / 2}px`;
-        wrapper.style.top = `${(window.innerHeight - 1080 * scale) / 2}px`;
-      }
-    }
-    window.addEventListener('resize', scaleToFitWindow);
-    scaleToFitWindow();
-
-    // --- DOM elements for controls and output ---
-    const offsetControls = document.getElementById("offset-controls");
-    const minimalModeCheckbox = document.getElementById("minimalMode");
-    const timerControls = document.getElementById("timer-controls");
-    const output = document.getElementById("output");
-    const syncStatus = document.getElementById("sync-status");
-    const toggleSyncIcon = document.getElementById("toggleSyncIcon");
-    const timezoneSelect = document.getElementById("timezoneSelect");
-
-    // --- Labels & Color Presets UI ---
-    const labelInputs = [
-      ['timer1','labelTimer1'],
-      ['timer2','labelTimer2'],
-      ['timer3','labelTimer3'],
-      ['timer4','labelTimer4'],
-      ['timer5','labelTimer5'],
-      ['timer6','labelTimer6']
-    ];
-    labelInputs.forEach(([tid, iid]) => {
-      const inp = document.getElementById(iid);
-      if (!inp) return;
-      const key = 'label_' + tid;
-      inp.value = localStorage.getItem(key) || '';
-      inp.addEventListener('input', () => {
-        localStorage.setItem(key, inp.value.trim());
-        updateClock();
-      });
-    });
-
-    const colorPresetSelect = document.getElementById('colorPreset');
-    const customBox = document.getElementById('customThresholds');
-    const orangeMinInput = document.getElementById('orangeMin');
-    const redMinInput = document.getElementById('redMin');
-
-    function applyPreset(preset) {
-      if (preset === 'short') { warnOrangeMin = 5; warnRedMin = 2; }
-      else if (preset === 'long') { warnOrangeMin = 30; warnRedMin = 10; }
-      else if (preset === 'xl') { warnOrangeMin = 60; warnRedMin = 15; }
-      else if (preset === 'custom') {
-        warnOrangeMin = Number(orangeMinInput.value) || 15;
-        warnRedMin = Number(redMinInput.value) || 5;
-      } else { // default
-        warnOrangeMin = 15; warnRedMin = 5;
-      }
-      localStorage.setItem('colorPreset', preset);
-      localStorage.setItem('warnOrangeMin', String(warnOrangeMin));
-      localStorage.setItem('warnRedMin', String(warnRedMin));
-      updateClock();
-    }
-
-    if (colorPresetSelect) {
-      // init
-      if (colorPreset) colorPresetSelect.value = colorPreset;
-      customBox.style.display = (colorPresetSelect.value === 'custom') ? 'block' : 'none';
-      // if custom was saved earlier, reflect saved values
-      if (colorPresetSelect.value === 'custom') {
-        orangeMinInput.value = localStorage.getItem('warnOrangeMin') || orangeMinInput.value;
-        redMinInput.value = localStorage.getItem('warnRedMin') || redMinInput.value;
-      }
-      applyPreset(colorPresetSelect.value);
-      colorPresetSelect.addEventListener('change', () => {
-        customBox.style.display = (colorPresetSelect.value === 'custom') ? 'block' : 'none';
-        applyPreset(colorPresetSelect.value);
-      });
-      orangeMinInput.addEventListener('input', () => {
-        if (colorPresetSelect.value === 'custom') applyPreset('custom');
-      });
-      redMinInput.addEventListener('input', () => {
-        if (colorPresetSelect.value === 'custom') applyPreset('custom');
-      });
-    }
-
-    // --- Output click: toggle controls ---
-    output.addEventListener("click", () => {
-      const offsetControls = document.getElementById("offset-controls");
-      const timerControls = document.getElementById("timer-controls");
-      if (offsetControls && timerControls) {
-        const isVisible = offsetControls.style.display === "block";
-        const nowVisible = !isVisible;
-        offsetControls.style.display = nowVisible ? "block" : "none";
-        timerControls.style.display = nowVisible ? "block" : "none";
-        // Ensure panels always sit above the clock (in case inline styles were changed elsewhere)
-        offsetControls.style.zIndex = "10000";
-        timerControls.style.zIndex = "10000";
-        // Re‑compute clock scaling whenever panels are shown or hidden.  Without
-        // this call, the ring might retain its previous scale until the
-        // browser window is resized, causing it to appear too large or too
-        // small relative to the control panel.  Invoking scaleToFitWindow()
-        // ensures that the clock fits snugly alongside the panel.
-        scaleToFitWindow();
-      }
-    });
-
-    // --- Timezone and time source selector logic ---
-    function initializeTimezone() {
-      // Prefer the per-tab display timezone from sessionStorage; if absent, use the
-      // last synced timezone from localStorage for backward compatibility, falling
-      // back to the default Warsaw.  This ensures each tab can maintain its own
-      // display timezone without affecting other open tabs.
-      const savedDisplay = sessionStorage.getItem("displayTimezone");
-      // Determine the initial display timezone.  We prefer a per-tab setting
-      // stored in `sessionStorage.displayTimezone`.  If none exists, we
-      // default to the last synchronization timezone (`lastSyncTimezone`)
-      // which is maintained independently of the display timezone.  If even
-      // that is not set, fall back to any legacy `lastUsedTimezone` (from
-      // older versions of the app), and finally to "Europe/Warsaw".  This
-      // logic ensures that opening a new tab does not adopt the display
-      // timezone chosen in another tab while still preserving the last
-      // synchronized baseline.
-      const savedTz = savedDisplay || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
-      timezoneSelect.value = savedTz;
-      timezoneSelect.addEventListener("change", () => {
-        // When the user selects a different display timezone, persist it in
-        // `sessionStorage.displayTimezone` so that this tab remembers its
-        // choice across reloads.  We intentionally avoid writing to
-        // localStorage here to prevent propagating the change to other
-        // open tabs.  Changing the display timezone does not trigger a
-        // re-synchronization; it simply recalculates the displayed time.
-        sessionStorage.setItem("displayTimezone", timezoneSelect.value);
-        // Recompute timer targets from stored ISO values for the new display timezone
-        recomputeTargetsForTz(timezoneSelect.value);
-        lastTargetsTz = timezoneSelect.value;
-        updateClock(); // Immediately reflect the new timezone in the UI
-      });
-      const timeSourceSelect = document.getElementById("timeSourceSelect");
-      const ntpInput = document.getElementById("ntpServerInput");
-      const apiInput = document.getElementById("apiServerInput");
-
-      timeSourceSelect.value = localStorage.getItem("timeSource") || "api";
-      ntpInput.value = localStorage.getItem("ntpServer") || "";
-      apiInput.value = localStorage.getItem("apiServer") || "https://timeapi.io";
-      //apiInput.dispatchEvent(new Event('change'));
-
-
-      // Save and re-sync when user changes time source or server addresses
-      timeSourceSelect.addEventListener("change", () => {
-        localStorage.setItem("timeSource", timeSourceSelect.value);
-        synchronizeTime();
-      });
-      ntpInput.addEventListener("change", () => {
-        localStorage.setItem("ntpServer", ntpInput.value);
-        synchronizeTime();
-      });
-      apiInput.addEventListener("change", () => {
-        localStorage.setItem("apiServer", apiInput.value);
-        synchronizeTime();
-      });
-    }
-
-    initializeTimezone();
-    applyLayout();
-    scaleToFitWindow();
-
-    // Removed: initial time difference grid.  Abbreviations are now
-    // appended directly in the dropdown labels.
-
-    // Track the last known offset (in minutes) for the currently selected timezone.
-    // When this offset changes (e.g. due to a daylight saving transition), the
-    // dropdown labels will be refreshed to display the new offsets.  Without
-    // tracking this, the dropdown would show a stale UTC offset during DST changes.
-    let currentTzOffsetForSavedZone = null;
-
-    /**
-     * refreshTimezoneLabels
-     *
-     * Iterates through the timezone select options and updates their labels
-     * to follow the pattern `(UTC±offset) abbreviation City`.  The
-     * abbreviation is taken from the static tzAbbrList where available,
-     * otherwise from Luxon's `offsetNameShort`.  The offset is computed
-     * using the current date/time for each zone, so it will reflect
-     * daylight-saving changes.  The original city portion of each option
-     * is preserved in opt.dataset.cityPart on first run.
-     */
-    function refreshTimezoneLabels() {
-      const tzSelectEl = document.getElementById('timezoneSelect');
-      if (!tzSelectEl) return;
-      for (const opt of tzSelectEl.options) {
-        const parent = opt.parentElement;
-        // Skip any remnants of a "Common Abbreviations" optgroup (none should exist)
-        if (parent && parent.tagName === 'OPTGROUP' && parent.getAttribute('label') === 'Common Abbreviations') {
-          continue;
-        }
-        const zoneId = opt.value;
-        try {
-          const abbr = getFixedAbbr(zoneId);
-          if (abbr) {
-            // Persist the city part if not already stored
-            if (!opt.dataset.cityPart) {
-              const txt = opt.textContent;
-              const endParen = txt.indexOf(')');
-              if (txt.startsWith('(') && endParen > 0) {
-                let city = txt.substring(endParen + 1).trim();
-                // Remove any leading abbreviation token from the city part.  Many
-                // of the static option labels embed an abbreviation (e.g., "CEST Warsaw").
-                // We heuristically strip the first word if it looks like an
-                // abbreviation (uppercase letters optionally containing a hyphen).
-                const parts = city.split(/\s+/);
-                if (parts.length > 1) {
-                  const first = parts[0];
-                  if (/^[A-Z]{2,5}(?:-[A-Z]{2,3})?$/.test(first)) {
-                    parts.shift();
-                  }
-                  city = parts.join(' ').trim();
-                }
-                // Remove any leading dash that might remain
-                if (city.startsWith('-') || city.startsWith('–')) {
-                  city = city.substring(1).trim();
-                }
-                opt.dataset.cityPart = city;
-              }
-            }
-            // Compute current UTC offset for this zone using Luxon (in minutes)
-            const dtZone = luxon.DateTime.now().setZone(zoneId);
-            const offsetMinutes = dtZone.offset;
-            const sign = offsetMinutes >= 0 ? '+' : '-';
-            const absMin = Math.abs(offsetMinutes);
-            const hours = String(Math.floor(absMin / 60)).padStart(2, '0');
-            const minutes = String(absMin % 60).padStart(2, '0');
-            const offsetStr = `UTC${sign}${hours}:${minutes}`;
-            const cityPart = opt.dataset.cityPart || '';
-            opt.textContent = `(${offsetStr}) ${abbr} ${cityPart}`;
-          }
-        } catch (e) {
-          // ignore invalid zone entries
-        }
-      }
-    }
-
-    // Perform an initial refresh of timezone labels when the DOM loads
-    refreshTimezoneLabels();
-
-// --- Minimal mode init ---
-const savedMinimal = localStorage.getItem("minimalMode") === "1";
-if (minimalModeCheckbox) minimalModeCheckbox.checked = savedMinimal;
-if (minimalModeCheckbox) minimalModeCheckbox.addEventListener("change", () => {
-  localStorage.setItem("minimalMode", minimalModeCheckbox.checked ? "1" : "0");
-  applyLayout();
-  scaleToFitWindow();
-});
-    // --- DOM interaction: Show/hide sync icon, help/about, and control panels ---
-    syncStatus.style.display = toggleSyncIcon.checked ? "block" : "none";
-    toggleSyncIcon.addEventListener("change", () => {
-      syncStatus.style.display = toggleSyncIcon.checked ? "block" : "none";
-    });
-    const toggleAbout = document.getElementById("toggleAbout");
-    const aboutBox = document.getElementById("about");
-    if (toggleAbout && aboutBox) {
-      toggleAbout.addEventListener("change", () => {
-        aboutBox.style.display = toggleAbout.checked ? "block" : "none";
-      });
-    }
-    // Toggle display of control panels when clicking the main clock
-    // (handled above with output.addEventListener)
-    // --- Layout management for simple (minimal) mode ---
-function getVisibleTimerIds() {
-  const ids = [];
-  if (timer1Target !== null && document.getElementById("enableTimer1").checked) ids.push("timer1");
-  if (timer2Target !== null && document.getElementById("enableTimer2").checked) ids.push("timer2");
-  if (timer3Target !== null && document.getElementById("enableTimer3").checked) ids.push("timer3");
-  if (timer4Target !== null && document.getElementById("enableTimer4").checked) ids.push("timer4");
-  if (timer5Target !== null && document.getElementById("enableTimer5").checked) ids.push("timer5");
-  if (timer6Target !== null && document.getElementById("enableTimer6").checked) ids.push("timer6");
-  return ids;
-}
-
-function computeBestFontSize(ids, maxWidth) {
-  const samples = ids.map(id => id === 'output' ? '88:88:88.88' : '-8888:88:88');
-  const weights = ids.map(id => id === 'output' ? 'bold' : 'normal');
-  let measurer = document.getElementById('fit-measurer');
-  if (!measurer) {
-    measurer = document.createElement('div');
-    measurer.id = 'fit-measurer';
-    measurer.style.position = 'absolute';
-    measurer.style.left = '-99999px';
-    measurer.style.top = '0';
-    measurer.style.whiteSpace = 'nowrap';
-    measurer.style.visibility = 'hidden';
-    document.body.appendChild(measurer);
+  for (let i = 0; i < 60; i += 5) {
+    const angle = (i * 6) * Math.PI / 180;
+    const x = radiusTicks * Math.cos(angle);
+    const y = radiusTicks * Math.sin(angle);
+    const tick = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    tick.setAttribute("cx", x);
+    tick.setAttribute("cy", y);
+    tick.setAttribute("r", 10);
+    tick.setAttribute("fill", "red");
+    svgTicks.appendChild(tick);
+  }
+  for (let i = 0; i < 60; i++) {
+    const angle = (i * 6) * Math.PI / 180;
+    const x = radiusDots * Math.cos(angle);
+    const y = radiusDots * Math.sin(angle);
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", x);
+    circle.setAttribute("cy", y);
+    circle.setAttribute("r", 5);
+    circle.setAttribute("fill", "red");
+    svgDots.appendChild(circle);
+    dots.push(circle);
   }
 
-  const fits = (size) => {
-    let maxW = 0;
-    for (let i = 0; i < ids.length; i++) {
-      measurer.style.fontFamily = "'NimbusSansL', sans-serif";
-      measurer.style.fontWeight = weights[i];
-      measurer.style.fontSize = size + 'px';
-      measurer.textContent = samples[i];
-      const w = measurer.scrollWidth;
-      if (w > maxW) maxW = w;
-    }
-    return maxW <= maxWidth;
+  // --- Stan synchronizacji czasu i dynamiczne timery ---
+  let timeOffset = Number(localStorage.getItem("lastValidOffset")) || 0;
+
+  // Kolekcja timerów: { id, enabled, label, iso, targetUtc, finished }
+  let timers = [];
+  let timerIdSeq = 1;
+
+  // --- Progi kolorów (globalnie) ---
+  let warnOrangeMin = Number(localStorage.getItem('warnOrangeMin')) || 15;
+  let warnRedMin = Number(localStorage.getItem('warnRedMin')) || 5;
+  let colorPreset = localStorage.getItem('colorPreset') || 'default';
+
+  // --- Abbreviations / skróty stref (do odświeżania etykiet) ---
+  const tzAbbrList = [
+    { zone: 'Europe/Warsaw', abbr: 'CET' }, { zone: 'America/New_York', abbr: 'EST' },
+    { zone: 'America/Chicago', abbr: 'CST' }, { zone: 'America/Los_Angeles', abbr: 'PST' },
+    { zone: 'UTC', abbr: 'UTC' }, { zone: 'Asia/Kolkata', abbr: 'IST' }, { zone: 'America/Denver', abbr: 'MST' },
+    { zone: 'Etc/GMT', abbr: 'GMT' }, { zone: 'Europe/Bucharest', abbr: 'EET' }, { zone: 'Europe/London', abbr: 'BST' },
+    { zone: 'Australia/Sydney', abbr: 'AEDT' }, { zone: 'Europe/Berlin', abbr: 'CEST' }, { zone: 'America/Halifax', abbr: 'AST' },
+    { zone: 'Asia/Singapore', abbr: 'SGT' }, { zone: 'Asia/Dubai', abbr: 'GST' }, { zone: 'Australia/Perth', abbr: 'AWST' },
+    { zone: 'Asia/Shanghai', abbr: 'CST-CH' }, { zone: 'America/Adak', abbr: 'HDT' }, { zone: 'Asia/Hong_Kong', abbr: 'HKT' },
+    { zone: 'Pacific/Honolulu', abbr: 'HST' }, { zone: 'Asia/Jerusalem', abbr: 'IDT' }, { zone: 'Asia/Bangkok', abbr: 'ICT' },
+    { zone: 'Asia/Tokyo', abbr: 'JST' }, { zone: 'Asia/Seoul', abbr: 'KST' }, { zone: 'Europe/Moscow', abbr: 'MSK' },
+    { zone: 'Asia/Manila', abbr: 'PHT' }, { zone: 'Africa/Johannesburg', abbr: 'SAST' }, { zone: 'Asia/Karachi', abbr: 'PKT' },
+    { zone: 'Africa/Nairobi', abbr: 'EAT' }, { zone: 'America/Havana', abbr: 'CST-CU' }, { zone: 'Pacific/Auckland', abbr: 'NZST' },
+    { zone: 'Asia/Kuala_Lumpur', abbr: 'MYT' }, { zone: 'America/Sao_Paulo', abbr: 'BRT' }, { zone: 'America/Anchorage', abbr: 'AKST' },
+    { zone: 'America/Santiago', abbr: 'CLT' }, { zone: 'America/Montevideo', abbr: 'UYT' }, { zone: 'Europe/Lisbon', abbr: 'WET' }
+  ];
+  function getFixedAbbr(zoneId) {
+    const entry = tzAbbrList.find(e => e.zone === zoneId);
+    if (entry) return entry.abbr;
+    try { return luxon.DateTime.now().setZone(zoneId).offsetNameShort || ''; } catch { return ''; }
+  }
+
+  // --- Parsowanie dat w wybranej strefie ---
+  window.isoToUtcMillis = function(iso, tzOpt) {
+    if (!iso) return null;
+    const tz = tzOpt || (sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw");
+    return luxon.DateTime.fromISO(iso, { zone: tz }).toUTC().toMillis();
   };
+  function recomputeTargetsForTz(tz) {
+    for (const t of timers) t.targetUtc = t.iso ? isoToUtcMillis(t.iso, tz) : null;
+  }
 
-  let lo = 40, hi = 300;
-  while (lo < hi) {
-    const mid = Math.floor((lo + hi + 1) / 2);
-    if (fits(mid)) {
-      lo = mid;
-    } else {
-      hi = mid - 1;
+  // --- Referencje DOM ---
+  const output = document.getElementById("output");
+  const dateEl = document.getElementById("date");
+  const syncStatus = document.getElementById("sync-status");
+  const timezoneSelect = document.getElementById("timezoneSelect");
+  const toggleSyncIcon = document.getElementById("toggleSyncIcon");
+  const minimalModeCheckbox = document.getElementById("minimalMode");
+  const timerControls = document.getElementById("timer-controls");
+  const offsetControls = document.getElementById("offset-controls");
+  const timersListEl = document.getElementById("timersList");
+  const addTimerBtn = document.getElementById("addTimer");
+
+  // --- Aktualizacja zegara i timerów ---
+  let lastSecond = -1;
+  let currentTzOffsetForSavedZone = null;
+
+  function updateClock() {
+    const tz = sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
+    const nowUtc = Date.now() + timeOffset;
+    const localNow = luxon.DateTime.fromMillis(nowUtc, { zone: "utc" }).setZone(tz);
+
+    const h = String(localNow.hour).padStart(2, '0');
+    const m = String(localNow.minute).padStart(2, '0');
+    const s = String(localNow.second).padStart(2, '0');
+    const cs = String(Math.floor(localNow.millisecond / 10)).padStart(2, '0');
+    output.innerText = `${h}:${m}:${s}.${cs}`;
+
+    const year = localNow.year, month = String(localNow.month).padStart(2, '0'), day = String(localNow.day).padStart(2, '0');
+    dateEl.innerText = `${year}.${month}.${day}`;
+
+    try {
+      const currentOffset = localNow.offset;
+      if (currentTzOffsetForSavedZone === null || currentOffset !== currentTzOffsetForSavedZone) {
+        currentTzOffsetForSavedZone = currentOffset;
+        refreshTimezoneLabels();
+      }
+    } catch {}
+
+    if (localNow.second !== lastSecond) {
+      for (let i = 0; i < 60; i++) dots[i].setAttribute("fill", i <= localNow.second ? "red" : "black");
+      lastSecond = localNow.second;
+    }
+
+    function updateTimerElement(t) {
+      const el = document.getElementById(t.id);
+      if (!el) return;
+      if (!t.enabled || t.targetUtc == null) {
+        el.innerText = "";
+        el.style.display = "none";
+        el.style.color = "white";
+        return;
+      }
+      const diff = t.targetUtc - nowUtc;
+      const isFuture = diff > 0;
+      const abs = Math.abs(diff);
+      const totalSec = isFuture ? Math.ceil(abs / 1000) : Math.floor(abs / 1000);
+      const th = Math.floor(totalSec / 3600);
+      const tm = Math.floor((totalSec % 3600) / 60);
+      const ts = totalSec % 60;
+      const sign = isFuture ? '-' : '+';
+      const timeText = `${sign}${th}:${String(tm).padStart(2,'0')}:${String(ts).padStart(2,'0')}`;
+
+      if (t.label) el.innerHTML = `<span class="label">${t.label}</span><span class="value">${timeText}</span>`;
+      else el.innerText = timeText;
+
+      if (isFuture) {
+        if (abs <= warnRedMin * 60 * 1000) el.style.color = 'red';
+        else if (abs <= warnOrangeMin * 60 * 1000) el.style.color = 'orange';
+        else el.style.color = 'white';
+      } else {
+        el.style.color = 'lime';
+        if (!t.finished) t.finished = true;
+      }
+      el.style.display = "block";
+    }
+
+    for (const t of timers) updateTimerElement(t);
+
+    applyLayout();
+  }
+
+  // --- Synchronizacja czasu (jak wcześniej) ---
+  async function synchronizeTime() {
+    const status = document.getElementById("sync-status");
+    const source = document.getElementById("timeSourceSelect").value;
+    const tz = (document.getElementById("timezoneSelect").value || "Europe/Warsaw");
+    try {
+      let serverTime;
+      if (source === "api") {
+        let apiBase = document.getElementById("apiServerInput").value.trim() || localStorage.getItem("apiServer") || "https://timeapi.io";
+        localStorage.setItem("apiServer", apiBase);
+        const response = await fetch(`${apiBase}/api/Time/current/zone?timeZone=${encodeURIComponent(tz)}`);
+        if (!response.ok) throw new Error("API time fetch error");
+        const data = await response.json();
+        serverTime = new Date(data.dateTime).getTime();
+      } else {
+        const ntpAddr = document.getElementById("ntpServerInput").value.trim();
+        if (!ntpAddr) throw new Error("No NTP server address set");
+        const base = document.getElementById("apiServerInput").value.trim();
+        if (!base) throw new Error("No API server address set");
+        if (!/^https?:\/\//i.test(base)) throw new Error("API server must include http(s)://");
+        const response = await fetch(`${base}/api/time?ntp=${encodeURIComponent(ntpAddr)}`);
+        if (!response.ok) throw new Error("Local time fetch error");
+        const data = await response.json();
+        const utc = luxon.DateTime.fromISO(data.utc, { zone: "utc" });
+        serverTime = utc.toMillis();
+      }
+      timeOffset = serverTime - Date.now();
+      localStorage.setItem("lastValidOffset", timeOffset);
+      localStorage.setItem("lastSyncTimezone", tz);
+      updateClock();
+      status.textContent = "Ω";
+      status.className = "ok";
+    } catch (err) {
+      console.error("Time sync failed:", err);
+      status.textContent = "Ω";
+      status.className = "error";
     }
   }
-  return lo;
-}
 
-function applyDefaultLayout() {
-  // Scale the 1080x1080 wrapper uniformly to the viewport
+  function loop() { updateClock(); requestAnimationFrame(loop); }
+  requestAnimationFrame(loop);
+  synchronizeTime();
+  setInterval(synchronizeTime, 300000);
+
+  // --- Tryb minimalny i layout ---
+  function isMinimalMode() {
+    const cb = document.getElementById('minimalMode');
+    const saved = localStorage.getItem('minimalMode') === '1';
+    return cb ? cb.checked : saved;
+  }
+  function getVisiblePanelWidth() {
+    let maxW = 0;
+    const oc = document.getElementById('offset-controls');
+    const tc = document.getElementById('timer-controls');
+    if (oc && oc.style.display === 'block') {
+      const ocStyles = window.getComputedStyle(oc);
+      const right = parseInt(ocStyles.right || '0', 10) || 0;
+      maxW = Math.max(maxW, oc.offsetWidth + right);
+    }
+    if (tc && tc.style.display === 'block') {
+      const tcStyles = window.getComputedStyle(tc);
+      const right = parseInt(tcStyles.right || '0', 10) || 0;
+      maxW = Math.max(maxW, tc.offsetWidth + right);
+    }
+    return maxW;
+  }
+  function scaleToFitWindow() {
+    const wrapper = document.getElementById('wrapper');
+    if (!wrapper) return;
+    if (isMinimalMode()) {
+      wrapper.style.transform = 'none';
+      wrapper.style.width = window.innerWidth + 'px';
+      wrapper.style.height = window.innerHeight + 'px';
+      wrapper.style.left = '0px';
+      wrapper.style.top = '0px';
+    } else {
+      wrapper.style.width = '1080px';
+      wrapper.style.height = '1080px';
+      const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1080);
+      wrapper.style.transform = `scale(${scale})`;
+      wrapper.style.left = `${(window.innerWidth - 1080 * scale) / 2}px`;
+      wrapper.style.top = `${(window.innerHeight - 1080 * scale) / 2}px`;
+    }
+  }
+  window.addEventListener('resize', scaleToFitWindow);
   scaleToFitWindow();
 
-  // Ensure the SVG ring is visible in graphics mode
-  const svgEl = document.querySelector('#wrapper svg');
-  if (svgEl) svgEl.style.display = 'block';
-
-  // Center time readout in wrapper space; font sizes are base values for 1080x1080
-  const out = document.getElementById('output');
-  if (out) {
-    out.style.top = '50%';
-    out.style.left = '50%';
-    out.style.fontSize = '120px';
-    out.style.letterSpacing = '-0.02em';
-    out.style.display = 'block';
+  function getVisibleTimerIds() {
+    return timers.filter(t => t.enabled && t.targetUtc !== null).map(t => t.id);
   }
 
-  // Date slightly below the center
-  const dateEl = document.getElementById('date');
-  if (dateEl) {
+  function applyDefaultLayout() {
+    scaleToFitWindow();
+    const svgEl = document.querySelector('#wrapper svg');
+    if (svgEl) svgEl.style.display = 'block';
+
+    output.style.top = '50%';
+    output.style.left = '50%';
+    output.style.fontSize = '120px';
+    output.style.letterSpacing = '-0.02em';
+    output.style.display = 'block';
+
     dateEl.style.top = '60%';
     dateEl.style.left = '50%';
     dateEl.style.fontSize = '50px';
     dateEl.style.letterSpacing = '-0.01em';
     dateEl.style.display = 'block';
-  }
 
-  // Timer slots around the ring (percentages in wrapper space)
-  const slots = {
-    timer1: '15%',
-    timer2: '21%',
-    timer3: '27%',
-    timer4: '73%',
-    timer5: '79%',
-    timer6: '85%',
-  };
+    const visible = getVisibleTimerIds();
+    const baseTimerPx = 60;
 
-  const visible = getVisibleTimerIds();
-  const baseTimerPx = 60; // base in 1080 space; scales with wrapper
+    // Prevent vertical overlap by capping font size per band (top/bottom)
+    const LINE_FACTOR = 0.78; // must match CSS line-height used for .timer
+    const TOP_BAND = { start: 15, end: 27 };
+    const BOTTOM_BAND = { start: 73, end: 85 };
+    const topCount = Math.ceil(visible.length / 2);
+    const bottomCount = visible.length - topCount;
 
-  // --- Prevent overlap with the minute ring by fitting to the inner chord ---
-  // Geometry in wrapper space (1080 × 1080):
-  // The ring of small dots has radius `radiusDots` (450). We keep a safety
-  // margin so text stays inside the ring at that vertical position.
-  const RING_RADIUS = typeof radiusDots === 'number' ? radiusDots : 450;
-  const SAFE_MARGIN = 90;                            // px inside the dot ring
-  const R_SAFE = Math.max(0, RING_RADIUS - SAFE_MARGIN); // inner safe radius
+    function maxFontForBand(count, band) {
+      if (count <= 0) return 9999;
+      const bandHeightPx = ((band.end - band.start) / 100) * 1080; // total px height of the band
+      const perSlotCenter = bandHeightPx / count;                   // center-to-center spacing
+      const maxLinePx = perSlotCenter * 0.80;                       // keep a margin (20%)
+      return Math.floor(maxLinePx / LINE_FACTOR);                   // convert line height to font px
+    }
+    const maxFontTop = maxFontForBand(topCount, TOP_BAND);
+    const maxFontBottom = maxFontForBand(bottomCount, BOTTOM_BAND);
 
-  // Parse slot percents as numbers for geometry (centered at 50%)
-  const slotPerc = {
-    timer1: 15, timer2: 21, timer3: 27,
-    timer4: 73, timer5: 79, timer6: 85
-  };
+    function capByBand(index, fontPx) {
+      const inTop = index < topCount;
+      const cap = inTop ? maxFontTop : maxFontBottom;
+      return Math.min(fontPx, cap);
+    }
 
-  // Hidden measurer for precise width checks
-  let measurer = document.getElementById('fit-measurer-default');
-  if (!measurer) {
-    measurer = document.createElement('div');
-    measurer.id = 'fit-measurer-default';
-    measurer.style.position = 'absolute';
-    measurer.style.left = '-99999px';
-    measurer.style.top = '0';
-    measurer.style.whiteSpace = 'nowrap';
-    measurer.style.visibility = 'hidden';
-    document.body.appendChild(measurer);
-  }
+    const RING_RADIUS = typeof radiusDots === 'number' ? radiusDots : 450;
+    const SAFE_MARGIN = 90;
+    const R_SAFE = Math.max(0, RING_RADIUS - SAFE_MARGIN);
 
-  function textWidthAt(fontPx, text, weight) {
-    measurer.style.fontFamily = "'NimbusSansL', sans-serif";
-    measurer.style.fontWeight = weight || 'normal';
-    measurer.style.fontSize = fontPx + 'px';
-    measurer.textContent = text || '';
-    return measurer.scrollWidth;
-  }
+    let measurer = document.getElementById('fit-measurer-default');
+    if (!measurer) {
+      measurer = document.createElement('div');
+      measurer.id = 'fit-measurer-default';
+      measurer.style.position = 'absolute';
+      measurer.style.left = '-99999px';
+      measurer.style.top = '0';
+      measurer.style.whiteSpace = 'nowrap';
+      measurer.style.visibility = 'hidden';
+      document.body.appendChild(measurer);
+    }
+    function textWidthAt(fontPx, text, weight) {
+      measurer.style.fontFamily = "'NimbusSansL', sans-serif";
+      measurer.style.fontWeight = weight || 'normal';
+      measurer.style.fontSize = fontPx + 'px';
+      measurer.textContent = text || '';
+      return measurer.scrollWidth;
+    }
+    function allowedChordWidthFor(topPercent) {
+      const cy = (topPercent / 100) * 1080;
+      const yRel = cy - 540;
+      const inside = (R_SAFE * R_SAFE) - (yRel * yRel);
+      if (inside <= 0) return Infinity;
+      return 2 * Math.sqrt(inside);
+    }
+    function computeTimerSlots(n) {
+      const topBand = { start: 15, end: 27 };
+      const bottomBand = { start: 73, end: 85 };
+      const topCount = Math.ceil(n / 2);
+      const bottomCount = n - topCount;
+      function spread(count, band) {
+        if (count <= 0) return [];
+        if (count === 1) return [ (band.start + band.end) / 2 ];
+        const step = (band.end - band.start) / (count - 1);
+        const arr = [];
+        for (let i = 0; i < count; i++) arr.push(band.start + i * step);
+        return arr;
+      }
+      return [...spread(topCount, topBand), ...spread(bottomCount, bottomBand)];
+    }
 
-  function allowedChordWidthFor(topPercent) {
-    // Translate the element's vertical center (percent) into Y relative to 1080 center
-    const cy = (topPercent / 100) * 1080;      // absolute Y
-    const yRel = cy - 540;                     // relative to center
-    // If outside the safe circle vertically, unlimited width (no overlap possible)
-    const inside = (R_SAFE * R_SAFE) - (yRel * yRel);
-    if (inside <= 0) return Infinity;
-    // Full chord width at that Y inside the safe circle
-    return 2 * Math.sqrt(inside);
-  }
-
-  Object.keys(slots).forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    if (visible.includes(id)) {
-      el.style.top = slots[id];
+    const slots = computeTimerSlots(visible.length);
+    for (let i = 0; i < visible.length; i++) {
+      const id = visible[i];
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const topP = slots[i];
+      el.style.top = topP + '%';
       el.style.left = '50%';
       el.style.display = 'block';
       el.style.letterSpacing = '-0.02em';
 
-      // Measure current text and fit to allowed chord width
       const text = el.innerText || el.textContent || '';
-      const allowed = allowedChordWidthFor(slotPerc[id]); // in px (wrapper space)
+      const allowed = allowedChordWidthFor(topP);
       let fontPx = baseTimerPx;
 
+      // Width-based cap: ensure text fits along the ring chord
       if (Number.isFinite(allowed)) {
         const w = textWidthAt(fontPx, text, 'normal');
         if (w > allowed) {
-          // Scale font down proportionally but keep a sensible minimum
-          const scaled = Math.max(22, Math.floor(fontPx * (allowed / w)));
-          fontPx = scaled;
+          fontPx = Math.floor(fontPx * (allowed / w));
         }
       }
+
+      // Height-based cap: ensure timers don't overlap vertically inside the band
+      fontPx = capByBand(i, fontPx);
+
+      // Final floor to keep it readable, but allow going smaller than before if needed
+      if (!Number.isFinite(fontPx) || fontPx < 14) fontPx = 14;
+
       el.style.fontSize = fontPx + 'px';
-    } else {
-      el.style.display = 'none';
     }
-  });
-}
 
-function applyMinimalLayout() {
-  // In minimal mode, turn off wrapper scaling and use the full viewport
-  const wrapper = document.getElementById('wrapper');
-  if (wrapper) {
-    wrapper.style.transform = 'none';
-    wrapper.style.width = window.innerWidth + 'px';
-    wrapper.style.height = window.innerHeight + 'px';
-    wrapper.style.left = '0px';
-    wrapper.style.top = '0px';
-  }
-  const svgEl = document.querySelector('#wrapper svg');
-  if (svgEl) svgEl.style.display = 'none';
-
-  const timerIds = getVisibleTimerIds();
-  const ids = [...timerIds, 'output', 'date'];
-
-  // Available area with tiny margins.  Subtract the width of any visible
-  // control panels so the simple clock and timers occupy only the free
-  // horizontal space.  Without this adjustment the layout would shrink
-  // unnecessarily when a side panel is open.
-  const panelW = getVisiblePanelWidth();
-  const availW = Math.floor((window.innerWidth - panelW) * 0.995);
-  const topMarginPx = Math.floor(window.innerHeight * 0.018);
-  const bottomMarginPx = Math.floor(window.innerHeight * 0.018);
-  const availH = window.innerHeight - topMarginPx - bottomMarginPx;
-
-  // Hidden measurer for WIDTH (height will be derived from font-size to keep proportions)
-  let measurer = document.getElementById('fit-measurer');
-  if (!measurer) {
-    measurer = document.createElement('div');
-    measurer.id = 'fit-measurer';
-    measurer.style.position = 'absolute';
-    measurer.style.left = '-99999px';
-    measurer.style.top = '0';
-    measurer.style.whiteSpace = 'nowrap';
-    measurer.style.visibility = 'hidden';
-    document.body.appendChild(measurer);
-  }
-
-  const n = timerIds.length;
-  // Multipliers: output == timer size; date small
-  let timerMul;
-  if (n <= 2) timerMul = 1.65;
-  else if (n === 3) timerMul = 1.50;
-  else if (n === 4) timerMul = 1.35;
-  else if (n === 5) timerMul = 1.20;
-  else timerMul = 1.08; // 6 timers
-  const outputMul = timerMul; // clock same size as timers
-  const dateMul   = 0.18;     // date very small
-
-  const getMul = (id) => id === 'output' ? outputMul : (id === 'date' ? dateMul : timerMul);
-  const weight = (id) => id === 'output' ? 'bold' : 'normal';
-
-  // Use ACTUAL text for width measurement
-  function currentText(id) {
-    const el = document.getElementById(id);
-    if (el && el.innerText) return el.innerText.trim();
-    if (id === 'output') return '08:08:08.88';
-    if (id === 'date') return '2025.09.01';
-    return '-0:00:00';
-  }
-
-  // Proportional heights & gaps (constant ratios at all scales)
-  const lineFactor = 0.78; // visual line height ≈ fontSize * 0.78
-  const boldExtra  = 0.03; // +3% for bold clock line
-  const gapTT = 0.020;     // 2.0% of font between timer->timer
-  const gapTO = 0.012;     // 1.2% between last timer and output
-  const gapOD = 0.030;     // 3.0% between output and date
-
-  // === 1) Find the biggest BASE size that fits WIDTH only ===
-  function widthFits(basePx) {
-    let maxW = 0;
-    for (const id of ids) {
-      const used = Math.floor(basePx * getMul(id));
-      measurer.style.fontFamily = "'NimbusSansL', sans-serif";
-      measurer.style.fontWeight = weight(id);
-      measurer.style.fontSize = used + 'px';
-      measurer.textContent = currentText(id);
-      const w = measurer.scrollWidth;
-      if (w > maxW) maxW = w;
-      if (maxW > availW) return false;
+    // Ukryj niewidoczne
+    for (const t of timers) {
+      if (!visible.includes(t.id)) {
+        const el = document.getElementById(t.id);
+        if (el) el.style.display = 'none';
+      }
     }
-    return true;
   }
-  let lo = 28, hi = 1600; // search by width only
-  while (lo < hi) {
-    const mid = Math.floor((lo + hi + 1) / 2);
-    if (widthFits(mid)) lo = mid; else hi = mid - 1;
-  }
-  const base = lo; // width-limited base size
 
-  // === 2) Compute required HEIGHT at that base (proportional model) ===
-  function requiredHeightAt(basePx) {
-    let total = 0;
+  function applyMinimalLayout() {
+    const wrapper = document.getElementById('wrapper');
+    if (wrapper) {
+      wrapper.style.transform = 'none';
+      wrapper.style.width = window.innerWidth + 'px';
+      wrapper.style.height = window.innerHeight + 'px';
+      wrapper.style.left = '0px';
+      wrapper.style.top = '0px';
+    }
+    const svgEl = document.querySelector('#wrapper svg');
+    if (svgEl) svgEl.style.display = 'none';
+
+    const timerIds = getVisibleTimerIds();
+    const ids = [...timerIds, 'output', 'date'];
+
+    const panelW = getVisiblePanelWidth();
+    const availW = Math.floor((window.innerWidth - panelW) * 0.995);
+    const topMarginPx = Math.floor(window.innerHeight * 0.018);
+    const bottomMarginPx = Math.floor(window.innerHeight * 0.018);
+    const availH = window.innerHeight - topMarginPx - bottomMarginPx;
+
+    let measurer = document.getElementById('fit-measurer');
+    if (!measurer) {
+      measurer = document.createElement('div');
+      measurer.id = 'fit-measurer';
+      measurer.style.position = 'absolute';
+      measurer.style.left = '-99999px';
+      measurer.style.top = '0';
+      measurer.style.whiteSpace = 'nowrap';
+      measurer.style.visibility = 'hidden';
+      document.body.appendChild(measurer);
+    }
+
+    const n = timerIds.length;
+    let timerMul;
+    if (n <= 2) timerMul = 1.65;
+    else if (n === 3) timerMul = 1.50;
+    else if (n === 4) timerMul = 1.35;
+    else if (n === 5) timerMul = 1.20;
+    else timerMul = 1.08;
+    const outputMul = timerMul;
+    const dateMul   = 0.18;
+    const getMul = (id) => id === 'output' ? outputMul : (id === 'date' ? dateMul : timerMul);
+    const weight = (id) => id === 'output' ? 'bold' : 'normal';
+
+    function currentText(id) {
+      const el = document.getElementById(id);
+      if (el && el.innerText) return el.innerText.trim();
+      if (id === 'output') return '08:08:08.88';
+      if (id === 'date') return '2025.09.01';
+      return '-0:00:00';
+    }
+
+    const lineFactor = 0.78, boldExtra = 0.03;
+    const gapTT = 0.020, gapTO = 0.012, gapOD = 0.030;
+
+    function widthFits(basePx) {
+      let maxW = 0;
+      for (const id of ids) {
+        const used = Math.floor(basePx * getMul(id));
+        measurer.style.fontFamily = "'NimbusSansL', sans-serif";
+        measurer.style.fontWeight = weight(id);
+        measurer.style.fontSize = used + 'px';
+        measurer.textContent = currentText(id);
+        const w = measurer.scrollWidth;
+        if (w > maxW) maxW = w;
+        if (maxW > availW) return false;
+      }
+      return true;
+    }
+    let lo = 28, hi = 1600;
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi + 1) / 2);
+      if (widthFits(mid)) lo = mid; else hi = mid - 1;
+    }
+    const base = lo;
+
+    function requiredHeightAt(basePx) {
+      let total = 0;
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        const used = Math.floor(basePx * getMul(id));
+        const extra = (id === 'output') ? boldExtra : 0;
+        total += Math.round(used * (lineFactor + extra));
+        if (i < ids.length - 1) {
+          const next = ids[i + 1];
+          if (id === 'output') total += Math.round(used * gapOD);
+          else if (next === 'output') total += Math.round(used * gapTO);
+          else total += Math.round(used * gapTT);
+        }
+      }
+      return total;
+    }
+    const requiredH = requiredHeightAt(base);
+    const scale = Math.min(1, availH / requiredH);
+
+    const lineHeights = [];
+    const gaps = new Array(ids.length - 1).fill(0);
     for (let i = 0; i < ids.length; i++) {
       const id = ids[i];
-      const used = Math.floor(basePx * getMul(id));
+      const used = Math.floor(base * getMul(id) * scale);
       const extra = (id === 'output') ? boldExtra : 0;
-      total += Math.round(used * (lineFactor + extra));
+      const lineH = Math.round(used * (lineFactor + extra));
+      lineHeights.push(lineH);
       if (i < ids.length - 1) {
         const next = ids[i + 1];
-        if (id === 'output') total += Math.round(used * gapOD);
-        else if (next === 'output') total += Math.round(used * gapTO);
-        else total += Math.round(used * gapTT);
+        if (id === 'output') gaps[i] = Math.round(used * gapOD);
+        else if (next === 'output') gaps[i] = Math.round(used * gapTO);
+        else gaps[i] = Math.round(used * gapTT);
       }
     }
-    return total;
-  }
-  const requiredH = requiredHeightAt(base);
-  const scale = Math.min(1, availH / requiredH); // uniform DOWNscale only
+    const sumH = lineHeights.reduce((a,b)=>a+b,0) + gaps.reduce((a,b)=>a+b,0);
+    let y = topMarginPx + Math.floor((availH - sumH)/2);
 
-  // === 3) Apply sizes & positions with the single scale factor ===
-  const lineHeights = [];
-  const gaps = new Array(ids.length - 1).fill(0);
-  for (let i = 0; i < ids.length; i++) {
-    const id = ids[i];
-    const used = Math.floor(base * getMul(id) * scale);
-    const extra = (id === 'output') ? boldExtra : 0;
-    const lineH = Math.round(used * (lineFactor + extra));
-    lineHeights.push(lineH);
-    if (i < ids.length - 1) {
-      const next = ids[i + 1];
-      if (id === 'output') gaps[i] = Math.round(used * gapOD);
-      else if (next === 'output') gaps[i] = Math.round(used * gapTO);
-      else gaps[i] = Math.round(used * gapTT);
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const used = Math.floor(base * getMul(id) * scale);
+      const minLine = 40, minDate = 16;
+      el.style.fontSize = (id === 'date' ? Math.max(minDate, used) : Math.max(minLine, used)) + 'px';
+      el.style.lineHeight = '0.78';
+      el.style.display = 'block';
+      el.style.letterSpacing = (id === 'date') ? '-0.01em' : '-0.02em';
+
+      const h = lineHeights[i];
+      const centerY = ((y + Math.floor(h / 2)) / window.innerHeight) * 100;
+      el.style.top = centerY + '%';
+      y += h + (i < gaps.length ? gaps[i] : 0);
     }
   }
-  const sumH = lineHeights.reduce((a,b)=>a+b,0) + gaps.reduce((a,b)=>a+b,0);
-  let y = topMarginPx + Math.floor((availH - sumH)/2);
 
-  for (let i = 0; i < ids.length; i++) {
-    const id = ids[i];
-    const el = document.getElementById(id);
-    if (!el) continue;
-    const used = Math.floor(base * getMul(id) * scale);
-    const minLine = 40, minDate = 16;
-    if (id === 'date') el.style.fontSize = Math.max(minDate, used) + 'px';
-    else el.style.fontSize = Math.max(minLine, used) + 'px';
-    el.style.lineHeight = '0.78';
-    el.style.display = 'block';
-    if (id === 'date') el.style.letterSpacing = '-0.01em';
-    else el.style.letterSpacing = '-0.02em';
-
-    const h = lineHeights[i];
-    const centerY = ((y + Math.floor(h / 2)) / window.innerHeight) * 100;
-    el.style.top = centerY + '%';
-    y += h + (i < gaps.length ? gaps[i] : 0);
+  function applyLayout() {
+    const minimal = minimalModeCheckbox && minimalModeCheckbox.checked;
+    if (minimal) applyMinimalLayout(); else applyDefaultLayout();
   }
-}
 
-function applyLayout() {
-  const minimal = minimalModeCheckbox && minimalModeCheckbox.checked;
-  if (minimal) applyMinimalLayout(); else applyDefaultLayout();
-}
-    // --- Timer control logic: set and reset timers based on form inputs ---
-    document.getElementById("setTimers").addEventListener("click", () => {
-      timer1Iso = document.getElementById("timer1Input").value || null;
-      timer2Iso = document.getElementById("timer2Input").value || null;
-      timer3Iso = document.getElementById("timer3Input").value || null;
-      timer4Iso = document.getElementById("timer4Input").value || null;
-      timer5Iso = document.getElementById("timer5Input").value || null;
-      timer6Iso = document.getElementById("timer6Input").value || null;
+  // --- Budowa wiersza sterowania timerem + tworzenie timera ---
+  function makeTimerRow(t) {
+    const row = document.createElement('div');
+    row.className = 'timer-row';
+    row.dataset.id = t.id;
+    row.style.borderBottom = '1px solid #ddd';
+    row.style.padding = '6px 0';
+    row.innerHTML = `
+      <label class="switch" style="vertical-align:middle;">
+        <input type="checkbox" class="enableTimer" ${t.enabled ? 'checked' : ''}>
+        <span class="slider"></span>
+      </label>
+      <span style="margin-left:4px;">Enable</span><br>
+      <label>Label:
+        <input type="text" class="labelInput" placeholder="e.g. Start" style="width: 95%;" value="${t.label || ''}">
+      </label><br>
+      <label>Target:
+        <input type="datetime-local" class="datetimeInput" style="width: 95%;" value="${t.iso || ''}">
+      </label><br>
+      <div style="margin-top:6px;">
+        <button class="resetTimer">Reset</button>
+        <button class="deleteTimer" style="margin-left:6px;">Delete</button>
+      </div>
+    `;
 
+    const enableCb = row.querySelector('.enableTimer');
+    enableCb.addEventListener('change', () => { t.enabled = !!enableCb.checked; updateClock(); });
+
+    const labelInp = row.querySelector('.labelInput');
+    labelInp.addEventListener('input', () => { t.label = (labelInp.value || '').trim(); updateClock(); });
+
+    const dtInp = row.querySelector('.datetimeInput');
+    dtInp.addEventListener('change', () => {
+      const iso = dtInp.value || null;
+      t.iso = iso;
       const tz = sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
-      recomputeTargetsForTz(tz);
-      lastTargetsTz = tz;
-
-      timer1Finished = false;
-      timer2Finished = false;
-      timer3Finished = false;
-      timer4Finished = false;
-      timer5Finished = false;
-      timer6Finished = false;
-
-      updateClock(); // To natychmiast pokaże aktywne timery
-      applyLayout();
+      t.targetUtc = iso ? isoToUtcMillis(iso, tz) : null;
+      t.finished = false;
+      updateClock();
     });
 
-    // Reset all timers
-    document.getElementById("resetTimers").addEventListener("click", () => {
-      timer1Target = null;
-      timer2Target = null;
-      timer3Target = null;
-      timer4Target = null;
-      timer5Target = null;
-      timer6Target = null;
-      timer1Finished = false;
-      timer2Finished = false;
-      timer3Finished = false;
-      timer4Finished = false;
-      timer5Finished = false;
-      timer6Finished = false;
-      document.getElementById("timer1").innerText = "";
-      document.getElementById("timer2").innerText = "";
-      document.getElementById("timer3").innerText = "";
-      document.getElementById("timer4").innerText = "";
-      document.getElementById("timer5").innerText = "";
-      document.getElementById("timer6").innerText = "";
-      timer1Iso = timer2Iso = timer3Iso = timer4Iso = timer5Iso = timer6Iso = null;
-      lastTargetsTz = null;
+    row.querySelector('.resetTimer').addEventListener('click', () => {
+      t.iso = null; t.targetUtc = null; t.finished = false;
+      const el = document.getElementById(t.id);
+      if (el) { el.innerText = ""; el.style.color = "white"; el.style.display = "none"; }
+      dtInp.value = "";
+      updateClock();
     });
 
-    // Reset individual timers
-    document.getElementById("resetTimer1").addEventListener("click", () => {
-      timer1Target = null;
-      timer1Iso = null;
-      lastTargetsTz = null;
-      timer1Finished = false;
-      document.getElementById("timer1").innerText = "";
+    row.querySelector('.deleteTimer').addEventListener('click', () => {
+      const idx = timers.findIndex(x => x.id === t.id);
+      if (idx !== -1) timers.splice(idx, 1);
+      const el = document.getElementById(t.id);
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+      if (row && row.parentNode) row.parentNode.removeChild(row);
+      updateClock();
     });
-    document.getElementById("resetTimer2").addEventListener("click", () => {
-      timer2Target = null;
-      timer2Iso = null;
-      lastTargetsTz = null;
-      timer2Finished = false;
-      document.getElementById("timer2").innerText = "";
-    });
-    document.getElementById("resetTimer3").addEventListener("click", () => {
-      timer3Target = null;
-      timer3Iso = null;
-      lastTargetsTz = null;
-      timer3Finished = false;
-      document.getElementById("timer3").innerText = "";
-    });
-    document.getElementById("resetTimer4").addEventListener("click", () => {
-      timer4Target = null;
-      timer4Iso = null;
-      lastTargetsTz = null;
-      timer4Finished = false;
-      document.getElementById("timer4").innerText = "";
-    });
-    document.getElementById("resetTimer5").addEventListener("click", () => {
-      timer5Target = null;
-      timer5Iso = null;
-      lastTargetsTz = null;
-      timer5Finished = false;
-      document.getElementById("timer5").innerText = "";
-    });
-    document.getElementById("resetTimer6").addEventListener("click", () => {
-      timer6Target = null;
-      timer6Iso = null;
-      lastTargetsTz = null;
-      timer6Finished = false;
-      document.getElementById("timer6").innerText = "";
-    });
-    
-    // --- Keyboard Shortcuts ---
-    document.addEventListener('keydown', (e) => {
-      const tag = (document.activeElement && document.activeElement.tagName) || '';
-      if (['INPUT','TEXTAREA','SELECT'].includes(tag)) return; // ignore while typing
 
-      // Toggle panels: S
-      if (e.key === 's' || e.key === 'S') {
-        const isVisible = offsetControls.style.display === 'block';
-        const show = !isVisible;
-        offsetControls.style.display = show ? 'block' : 'none';
-        timerControls.style.display = show ? 'block' : 'none';
-        // Recompute scaling so the clock fits next to the panel.  Without
-        // recalculating the scale, the clock's size might lag behind the
-        // visibility state of the panels until a window resize occurs.
+    return row;
+  }
+
+  function addTimer() {
+    const id = `timer${timerIdSeq++}`;
+    const disp = document.createElement('div');
+    disp.id = id;
+    disp.className = 'timer';
+    disp.style.top = '15%';
+    disp.style.left = '50%';
+    disp.style.display = 'none';
+    document.getElementById('wrapper').appendChild(disp);
+
+    const t = { id, enabled: true, label: '', iso: null, targetUtc: null, finished: false };
+    timers.push(t);
+
+    const row = makeTimerRow(t);
+    timersListEl.appendChild(row);
+
+    applyLayout();
+    return t;
+  }
+
+  if (addTimerBtn) addTimerBtn.addEventListener('click', () => addTimer());
+
+  // Reset All
+  const resetAllBtn = document.getElementById("resetTimers");
+  if (resetAllBtn) {
+    resetAllBtn.addEventListener('click', () => {
+      for (const t of timers) {
+        t.iso = null; t.targetUtc = null; t.finished = false;
+        const el = document.getElementById(t.id);
+        if (el) { el.innerText = ""; el.style.color = "white"; el.style.display = "none"; }
+        const inp = timersListEl.querySelector(`.timer-row[data-id="${t.id}"] .datetimeInput`);
+        if (inp) inp.value = "";
+      }
+      updateClock();
+    });
+  }
+
+  // Startowo dodaj 6 timerów (możesz potem dowolnie dodawać/usuwać)
+  for (let i = 0; i < 6; i++) addTimer();
+
+  // Klik w zegar = panel ustawień
+  output.addEventListener("click", () => {
+    const isVisible = offsetControls.style.display === "block";
+    const show = !isVisible;
+    offsetControls.style.display = show ? "block" : "none";
+    timerControls.style.display = show ? "block" : "none";
+    offsetControls.style.zIndex = "10000";
+    timerControls.style.zIndex = "10000";
+    scaleToFitWindow();
+  });
+
+  // Inicjalizacja strefy czasu + serwera czasu
+  function initializeTimezone() {
+    const savedDisplay = sessionStorage.getItem("displayTimezone");
+    const savedTz = savedDisplay || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
+    timezoneSelect.value = savedTz;
+    timezoneSelect.addEventListener("change", () => {
+      sessionStorage.setItem("displayTimezone", timezoneSelect.value);
+      recomputeTargetsForTz(timezoneSelect.value);
+      updateClock();
+    });
+
+    const timeSourceSelect = document.getElementById("timeSourceSelect");
+    const ntpInput = document.getElementById("ntpServerInput");
+    const apiInput = document.getElementById("apiServerInput");
+
+    timeSourceSelect.value = localStorage.getItem("timeSource") || "api";
+    ntpInput.value = localStorage.getItem("ntpServer") || "";
+    apiInput.value = localStorage.getItem("apiServer") || "https://timeapi.io";
+
+    timeSourceSelect.addEventListener("change", () => { localStorage.setItem("timeSource", timeSourceSelect.value); synchronizeTime(); });
+    ntpInput.addEventListener("change", () => { localStorage.setItem("ntpServer", ntpInput.value); synchronizeTime(); });
+    apiInput.addEventListener("change", () => { localStorage.setItem("apiServer", apiInput.value); synchronizeTime(); });
+  }
+  initializeTimezone();
+
+  // Ikona Ω i „Help”
+  syncStatus.style.display = toggleSyncIcon.checked ? "block" : "none";
+  toggleSyncIcon.addEventListener("change", () => { syncStatus.style.display = toggleSyncIcon.checked ? "block" : "none"; });
+  const toggleAbout = document.getElementById("toggleAbout");
+  const aboutBox = document.getElementById("about");
+  if (toggleAbout && aboutBox) {
+    toggleAbout.addEventListener("change", () => { aboutBox.style.display = toggleAbout.checked ? "block" : "none"; });
+  }
+
+  // Presety kolorów
+  const colorPresetSelect = document.getElementById('colorPreset');
+  const customBox = document.getElementById('customThresholds');
+  const orangeMinInput = document.getElementById('orangeMin');
+  const redMinInput = document.getElementById('redMin');
+
+  function applyPreset(preset) {
+    if (preset === 'short') { warnOrangeMin = 5; warnRedMin = 2; }
+    else if (preset === 'long') { warnOrangeMin = 30; warnRedMin = 10; }
+    else if (preset === 'xl') { warnOrangeMin = 60; warnRedMin = 15; }
+    else if (preset === 'custom') {
+      warnOrangeMin = Number(orangeMinInput.value) || 15;
+      warnRedMin = Number(redMinInput.value) || 5;
+    } else { warnOrangeMin = 15; warnRedMin = 5; }
+    localStorage.setItem('colorPreset', preset);
+    localStorage.setItem('warnOrangeMin', String(warnOrangeMin));
+    localStorage.setItem('warnRedMin', String(warnRedMin));
+    updateClock();
+  }
+
+  if (colorPresetSelect) {
+    if (colorPreset) colorPresetSelect.value = colorPreset;
+    customBox.style.display = (colorPresetSelect.value === 'custom') ? 'block' : 'none';
+    if (colorPresetSelect.value === 'custom') {
+      orangeMinInput.value = localStorage.getItem('warnOrangeMin') || orangeMinInput.value;
+      redMinInput.value = localStorage.getItem('warnRedMin') || redMinInput.value;
+    }
+    applyPreset(colorPresetSelect.value);
+    colorPresetSelect.addEventListener('change', () => {
+      customBox.style.display = (colorPresetSelect.value === 'custom') ? 'block' : 'none';
+      applyPreset(colorPresetSelect.value);
+    });
+    orangeMinInput.addEventListener('input', () => { if (colorPresetSelect.value === 'custom') applyPreset('custom'); });
+    redMinInput.addEventListener('input', () => { if (colorPresetSelect.value === 'custom') applyPreset('custom'); });
+  }
+
+  // Tryb minimalny + skróty klawiszowe: S (panele), G (grafika/minimal), R (reset all)
+  const savedMinimal = localStorage.getItem("minimalMode") === "1";
+  if (minimalModeCheckbox) minimalModeCheckbox.checked = savedMinimal;
+  if (minimalModeCheckbox) minimalModeCheckbox.addEventListener("change", () => {
+    localStorage.setItem("minimalMode", minimalModeCheckbox.checked ? "1" : "0");
+    applyLayout();
+    scaleToFitWindow();
+  });
+  document.addEventListener('keydown', (e) => {
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (['INPUT','TEXTAREA','SELECT'].includes(tag)) return;
+    if (e.key === 's' || e.key === 'S') {
+      const isVisible = offsetControls.style.display === 'block';
+      const show = !isVisible;
+      offsetControls.style.display = show ? 'block' : 'none';
+      timerControls.style.display = show ? 'block' : 'none';
+      scaleToFitWindow();
+      return;
+    }
+    if (e.key === 'g' || e.key === 'G') {
+      if (minimalModeCheckbox) {
+        minimalModeCheckbox.checked = !minimalModeCheckbox.checked;
+        localStorage.setItem('minimalMode', minimalModeCheckbox.checked ? '1' : '0');
+        applyLayout();
         scaleToFitWindow();
-        return;
       }
-      // Toggle minimal mode: G
-      if (e.key === 'g' || e.key === 'G') {
-        if (minimalModeCheckbox) {
-          minimalModeCheckbox.checked = !minimalModeCheckbox.checked;
-          localStorage.setItem('minimalMode', minimalModeCheckbox.checked ? '1' : '0');
-          applyLayout();
-          scaleToFitWindow();
-        }
-        return;
-      }
-      // Reset all timers: R
-      if (e.key === 'r' || e.key === 'R') {
-        const btn = document.getElementById('resetTimers');
-        if (btn) btn.click();
-        return;
-      }
-      // Focus specific timer input: 1..6
-      if ('123456'.includes(e.key)) {
-        const n = e.key;
-        const show = true;
-        offsetControls.style.display = 'block';
-        timerControls.style.display = 'block';
-        const inp = document.getElementById(`timer${n}Input`);
-        if (inp) { inp.focus(); inp.scrollIntoView({behavior:'smooth', block:'center'}); }
-        return;
-      }
-      // Ctrl+1..6: reset specific timer
-      if (e.ctrlKey && '123456'.includes(e.key)) {
-        const n = e.key;
-        const btn = document.getElementById(`resetTimer${n}`);
-        if (btn) btn.click();
-        return;
-      }
-    });
+      return;
+    }
+    if (e.key === 'r' || e.key === 'R') {
+      const btn = document.getElementById('resetTimers');
+      if (btn) btn.click();
+      return;
+    }
+  });
 
-    }); // End of DOMContentLoaded
-  </script>
+  // Pierwszy layout
+  applyLayout();
+}); // DOMContentLoaded
+
+// Odświeżanie etykiet stref czasu (global)
+function refreshTimezoneLabels() {
+  const tzSelectEl = document.getElementById('timezoneSelect');
+  if (!tzSelectEl) return;
+  for (const opt of tzSelectEl.options) {
+    const parent = opt.parentElement;
+    if (parent && parent.tagName === 'OPTGROUP' && parent.getAttribute('label') === 'Common Abbreviations') continue;
+    const zoneId = opt.value;
+    try {
+      const dtZone = luxon.DateTime.now().setZone(zoneId);
+      const offsetMinutes = dtZone.offset;
+      const sign = offsetMinutes >= 0 ? '+' : '-';
+      const absMin = Math.abs(offsetMinutes);
+      const hours = String(Math.floor(absMin / 60)).padStart(2, '0');
+      const minutes = String(absMin % 60).padStart(2, '0');
+      const offsetStr = `UTC${sign}${hours}:${minutes}`;
+      const entry = (function(zone){const e=[{zone:'Europe/Warsaw',abbr:'CET'},{zone:'America/New_York',abbr:'EST'},{zone:'America/Chicago',abbr:'CST'},{zone:'America/Los_Angeles',abbr:'PST'},{zone:'UTC',abbr:'UTC'},{zone:'Asia/Kolkata',abbr:'IST'},{zone:'America/Denver',abbr:'MST'},{zone:'Etc/GMT',abbr:'GMT'},{zone:'Europe/Bucharest',abbr:'EET'},{zone:'Europe/London',abbr:'BST'},{zone:'Australia/Sydney',abbr:'AEDT'},{zone:'Europe/Berlin',abbr:'CEST'},{zone:'America/Halifax',abbr:'AST'},{zone:'Asia/Singapore',abbr:'SGT'},{zone:'Asia/Dubai',abbr:'GST'},{zone:'Australia/Perth',abbr:'AWST'},{zone:'Asia/Shanghai',abbr:'CST-CH'},{zone:'America/Adak',abbr:'HDT'},{zone:'Asia/Hong_Kong',abbr:'HKT'},{zone:'Pacific/Honolulu',abbr:'HST'},{zone:'Asia/Jerusalem',abbr:'IDT'},{zone:'Asia/Bangkok',abbr:'ICT'},{zone:'Asia/Tokyo',abbr:'JST'},{zone:'Asia/Seoul',abbr:'KST'},{zone:'Europe/Moscow',abbr:'MSK'},{zone:'Asia/Manila',abbr:'PHT'},{zone:'Africa/Johannesburg',abbr:'SAST'},{zone:'Asia/Karachi',abbr:'PKT'},{zone:'Africa/Nairobi',abbr:'EAT'},{zone:'America/Havana',abbr:'CST-CU'},{zone:'Pacific/Auckland',abbr:'NZST'},{zone:'Asia/Kuala_Lumpur',abbr:'MYT'},{zone:'America/Sao_Paulo',abbr:'BRT'},{zone:'America/Anchorage',abbr:'AKST'},{zone:'America/Santiago',abbr:'CLT'},{zone:'America/Montevideo',abbr:'UYT'},{zone:'Europe/Lisbon',abbr:'WET'}].find(x=>x.zone===zone);return e?e.abbr:luxon.DateTime.now().setZone(zone).offsetNameShort||''})(zoneId);
+      if (!opt.dataset.cityPart) {
+        const txt = opt.textContent;
+        const endParen = txt.indexOf(')');
+        if (txt.startsWith('(') && endParen > 0) {
+          let city = txt.substring(endParen + 1).trim();
+          const parts = city.split(/\s+/);
+          if (parts.length > 1) {
+            const first = parts[0];
+            if (/^[A-Z]{2,5}(?:-[A-Z]{2,3})?$/.test(first)) parts.shift();
+            city = parts.join(' ').trim();
+          }
+          if (city.startsWith('-') || city.startsWith('–')) city = city.substring(1).trim();
+          opt.dataset.cityPart = city;
+        }
+      }
+      const cityPart = opt.dataset.cityPart || '';
+      opt.textContent = `(${offsetStr}) ${entry} ${cityPart}`;
+    } catch {}
+  }
+}
+</script>
 </div>
 
   <div id="about" style="position:fixed; bottom:20px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10; display:none; text-align: center;">
     <strong>About BIG RED CLOCK</strong>
     <p>
-      This fullscreen clock shows the current time with centisecond precision, a date, and up to four countdown timers.
+      This fullscreen clock shows the current time with centisecond precision, a date, and any number of countdown timers (add or remove as needed).
     </p>
     <ul>
       <li>Click on the red clock to toggle control panels (timezone, timer settings).</li>
