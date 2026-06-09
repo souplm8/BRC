@@ -151,6 +151,185 @@
       box-sizing: border-box;
       padding-right: 8px; /* space for scrollbar */
     }
+    .control-panel {
+      width: 332px;
+      background: rgba(255,255,255,0.96);
+      color: #111;
+      border-radius: 8px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.28);
+      text-align: left;
+      backdrop-filter: blur(6px);
+    }
+    .control-panel label,
+    .control-panel span,
+    .control-panel strong,
+    .control-panel button,
+    .control-panel input,
+    .control-panel select,
+    .control-panel div {
+      font-family: Arial, sans-serif;
+    }
+    .control-panel hr {
+      border: 0;
+      border-top: 1px solid #d7d7d7;
+      margin: 12px 0;
+    }
+    .control-panel .panel-section + .panel-section {
+      margin-top: 12px;
+    }
+    .control-panel .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 8px;
+      text-align: center;
+    }
+    .control-panel .field-row {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .control-panel .field-row.compact-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .control-panel .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .control-panel .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      line-height: 1.2;
+    }
+    .control-panel input[type="text"],
+    .control-panel input[type="number"],
+    .control-panel input[type="datetime-local"],
+    .control-panel select {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      height: 30px;
+      padding: 4px 8px;
+      border: 1px solid #bfc4cc;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 14px;
+    }
+    .control-panel button {
+      height: 30px;
+      padding: 0 10px;
+      border: 1px solid #bfc4cc;
+      border-radius: 6px;
+      background: #f3f4f6;
+      color: #111;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .control-panel .button-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .control-panel .toggle-row {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .control-panel .status-box {
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: #f3f4f6;
+      font-size: 12px;
+      line-height: 1.35;
+      color: #333;
+    }
+    .control-panel .subtle {
+      font-size: 12px;
+      color: #666;
+    }
+    .control-panel .summary-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 12px;
+      color: #666;
+    }
+    .control-panel .tab-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .control-panel .tab-btn.active {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+    .control-panel .section-subtitle {
+      font-size: 12px;
+      font-weight: 600;
+      color: #444;
+      margin: 0 0 6px;
+    }
+    .timer-row {
+      border-bottom: 1px solid #e2e2e2;
+      padding: 10px 0;
+      cursor: pointer;
+    }
+    .timer-row.selected {
+      background: #f5f7fb;
+      border-radius: 6px;
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+    .timer-topline {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .timer-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #222;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .timer-state {
+      font-size: 11px;
+      color: #666;
+      white-space: nowrap;
+    }
+    .timer-preview {
+      font-size: 12px;
+      color: #555;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .editor-card {
+      padding: 10px;
+      border: 1px solid #d7dbe2;
+      border-radius: 8px;
+      background: #f9fafb;
+      margin-top: 10px;
+    }
+    .editor-card.hidden {
+      display: none;
+    }
     /* tighter vertical metrics so elements can sit closer to each other */
     .timer, #output, #date { line-height: 0.78; }
   </style>
@@ -171,9 +350,16 @@
     <div id="sync-status"></div>
   </div>
 
-  <div id="offset-controls" style="position:fixed; top:20px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10000; display:none; text-align: center;">
-    <label for="timezoneSelect">Timezone:</label>
-    <select id="timezoneSelect">
+  <div id="offset-controls" class="control-panel" style="position:fixed; top:20px; right:20px; padding:12px; z-index:10000; display:none;">
+    <div class="tab-row">
+      <button id="showClockPanel" class="tab-btn active" type="button">Clock</button>
+      <button id="showTimersPanel" class="tab-btn" type="button">Timers</button>
+    </div>
+    <div class="panel-section">
+      <div class="field-row">
+        <label class="field-label" for="timezoneSelect">Timezone</label>
+        <select id="timezoneSelect">
+      <option value="Etc/GMT+12">(UTC-12:00) Baker Island</option>
       <option value="Pacific/Midway">(UTC-11:00) Midway</option>
       <option value="America/Adak">(UTC-10:00) Adak</option>
       <option value="Pacific/Honolulu">(UTC-10:00) Honolulu</option>
@@ -209,63 +395,170 @@
       <!-- The common abbreviations group has been removed at user request.  All zones
            now appear in the main list, and abbreviations are appended directly
            to each label using the script below. -->
-    </select>
+        </select>
+      </div>
     <!-- Removed timezone difference grid at user request.  Instead of displaying a permanent
          table of offsets, the dropdown itself will append fixed abbreviations (e.g., CET)
          to each zone's label.  This keeps the interface uncluttered while still
          conveying the abbreviation. -->
-    <br>
-    <label for="timeSourceSelect">Time source:</label>
-    <select id="timeSourceSelect">
-      <option value="api">Public API (timeapi.io)</option>
-      <option value="ntp">Local time server</option>
-    </select>
-    <br>
-    <label for="ntpServerInput">NTP server address:</label>
-    <input type="text" id="ntpServerInput" placeholder="e.g. 192.168.1.100:8000" />
-    <br>
-    <label for="apiServerInput">API server address:</label>
-    <input type="text" id="apiServerInput" placeholder="e.g. https://timeapi.io" />
-    <br><br>
-    <label class="switch">
-      <input type="checkbox" id="toggleSyncIcon" checked>
-      <span class="slider"></span>
-    </label>
-    <span>Show sync icon</span>
-    <br>
-    <label class="switch">
-      <input type="checkbox" id="minimalMode">
-      <span class="slider"></span>
-    </label>
-    <span>Simple mode (clock + timers, no graphics)</span>
-    <br>
-    <label class="switch">
-      <input type="checkbox" id="toggleAbout">
-      <span class="slider"></span>
-    </label>
-    <span>Help</span>
-  </div>
-  <div id="timer-controls" style="position:fixed; top:240px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10000; display:none; text-align: center;">
-    <div>
-      <strong>Timers</strong><br>
-      <button id="addTimer">Add Timer</button>
-      <button id="resetTimers" style="margin-left:6px;">Reset All Timers</button>
+      <div class="field-row">
+        <label class="field-label" for="timeSourceSelect">Time source</label>
+        <select id="timeSourceSelect">
+          <option value="api">Public API (timeapi.io)</option>
+          <option value="ntp">Local time server</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <label class="field-label" for="ntpServerInput">NTP server</label>
+        <input type="text" id="ntpServerInput" placeholder="e.g. 192.168.1.100:8000" />
+      </div>
+      <div class="field-row">
+        <label class="field-label" for="apiServerInput">API server</label>
+        <input type="text" id="apiServerInput" placeholder="e.g. https://timeapi.io" />
+      </div>
     </div>
-    <div id="timersList" style="margin-top:8px; text-align:left;"></div>
+    <div class="panel-section">
+      <div class="toggle-row">
+        <label class="switch">
+          <input type="checkbox" id="toggleSyncIcon" checked>
+          <span class="slider"></span>
+        </label>
+        <span>Show sync icon</span>
+      </div>
+      <div class="toggle-row">
+        <label class="switch">
+          <input type="checkbox" id="minimalMode">
+          <span class="slider"></span>
+        </label>
+        <span>Simple mode</span>
+      </div>
+      <div class="toggle-row" style="margin-bottom:0;">
+        <label class="switch">
+          <input type="checkbox" id="toggleAbout">
+          <span class="slider"></span>
+        </label>
+        <span>Help</span>
+      </div>
+    </div>
     <hr>
-    <div>
-      <strong>Color thresholds</strong><br>
-      <label for="colorPreset">Preset:</label>
-      <select id="colorPreset">
+    <div class="panel-section">
+      <div class="section-title">Clock Shift</div>
+      <div id="displayedTimeStatus" class="status-box"></div>
+      <div style="margin-top:10px;">
+        <div class="field-row">
+          <label class="field-label" for="shiftDirection">Direction</label>
+          <select id="shiftDirection">
+            <option value="1">Forward</option>
+            <option value="-1">Backward</option>
+          </select>
+        </div>
+        <div class="section-subtitle">Offset Amount</div>
+        <div class="field-row compact-2">
+          <div class="field-block">
+            <label class="field-label" for="shiftDays">Days</label>
+            <input type="number" id="shiftDays" value="0" min="0" step="1">
+          </div>
+          <div class="field-block">
+            <label class="field-label" for="shiftHours">Hours</label>
+            <input type="number" id="shiftHours" value="0" min="0" step="1">
+          </div>
+        </div>
+        <div class="field-row compact-2">
+          <div class="field-block">
+            <label class="field-label" for="shiftMinutes">Minutes</label>
+            <input type="number" id="shiftMinutes" value="0" min="0" step="1">
+          </div>
+          <div class="field-block">
+            <label class="field-label" for="shiftSeconds">Seconds</label>
+            <input type="number" id="shiftSeconds" value="0" min="0" step="1">
+          </div>
+        </div>
+      </div>
+      <div class="button-row">
+        <button id="applyManualOffset">Apply Offset</button>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="section-subtitle">Set Exact Date/Time</div>
+        <input type="datetime-local" id="manualClockInput" step="1" style="width: 100%;" />
+      </div>
+      <div class="button-row">
+        <button id="applyManualClock">Set Clock</button>
+        <button id="resetManualClock">Reset Shift</button>
+      </div>
+      <div id="manualOffsetStatus" class="subtle" style="margin-top:8px; text-align:center;"></div>
+    </div>
+    <div class="panel-section">
+      <div class="toggle-row" style="margin-bottom:0;">
+        <label class="switch">
+          <input type="checkbox" id="showMilliseconds" checked>
+          <span class="slider"></span>
+        </label>
+        <span>Show milliseconds</span>
+      </div>
+      <div class="toggle-row" style="margin-bottom:0; margin-top:8px;">
+        <label class="switch">
+          <input type="checkbox" id="showDate" checked>
+          <span class="slider"></span>
+        </label>
+        <span>Show date</span>
+      </div>
+    </div>
+  </div>
+  <div id="timer-controls" class="control-panel" style="position:fixed; top:240px; right:20px; padding:12px; z-index:10000; display:none;">
+    <div class="tab-row">
+      <button id="showClockPanelFromTimers" class="tab-btn" type="button">Clock</button>
+      <button id="showTimersPanelFromTimers" class="tab-btn active" type="button">Timers</button>
+    </div>
+    <div class="panel-section">
+      <div class="section-title">Timers</div>
+      <div class="button-row" style="justify-content:center;">
+        <button id="addTimer">Add Timer</button>
+        <button id="resetTimers">Reset All Timers</button>
+      </div>
+      <div id="timersSummary" class="summary-line">
+        <span>0 timers</span>
+        <span>0 active</span>
+      </div>
+      <div id="timerEditor" class="editor-card hidden">
+        <div id="timerEditorTitle" class="section-subtitle">Timer</div>
+        <div class="field-block" style="margin-bottom:8px;">
+          <label class="field-label" for="timerLabelInput">Label</label>
+          <input type="text" id="timerLabelInput" placeholder="e.g. Start">
+        </div>
+        <div class="field-block">
+          <label class="field-label" for="timerTargetInput">Target</label>
+          <input type="datetime-local" id="timerTargetInput" step="1">
+        </div>
+        <div class="button-row">
+          <button id="saveTimerChanges">Save</button>
+          <button id="resetSelectedTimer">Reset</button>
+          <button id="deleteSelectedTimer">Delete</button>
+        </div>
+      </div>
+    </div>
+    <div id="timersList" style="margin-top:8px;"></div>
+    <hr>
+    <div class="panel-section">
+      <div class="section-title" style="font-size:16px;">Color Thresholds</div>
+      <div class="field-row">
+        <label class="field-label" for="colorPreset">Preset</label>
+        <select id="colorPreset">
         <option value="default" selected>Default (15/5 min)</option>
         <option value="short">Short (5/2 min)</option>
         <option value="long">Long (30/10 min)</option>
         <option value="xl">Very long (60/15 min)</option>
         <option value="custom">Custom</option>
-      </select><br>
+        </select>
+      </div>
       <div id="customThresholds" style="display:none; margin-top:6px;">
-        <label>Orange (min): <input type="number" id="orangeMin" min="0" value="15" style="width:80px;"></label><br>
-        <label>Red (min): <input type="number" id="redMin" min="0" value="5" style="width:80px;"></label>
+        <div class="field-row">
+          <label class="field-label" for="orangeMin">Orange (min)</label>
+          <input type="number" id="orangeMin" min="0" value="15">
+        </div>
+        <div class="field-row" style="margin-bottom:0;">
+          <label class="field-label" for="redMin">Red (min)</label>
+          <input type="number" id="redMin" min="0" value="5">
+        </div>
       </div>
     </div>
   </div>
@@ -304,11 +597,14 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // --- Stan synchronizacji czasu i dynamiczne timery ---
-  let timeOffset = Number(localStorage.getItem("lastValidOffset")) || 0;
+  let syncOffset = Number(localStorage.getItem("lastValidOffset")) || 0;
+  let manualTimeOffset = Number(localStorage.getItem("manualTimeOffset")) || 0;
 
   // Kolekcja timerów: { id, enabled, label, iso, targetUtc, finished }
   let timers = [];
   let timerIdSeq = 1;
+  let selectedTimerId = null;
+  let activePanelView = 'clock';
 
   // --- Progi kolorów (globalnie) ---
   let warnOrangeMin = Number(localStorage.getItem('warnOrangeMin')) || 15;
@@ -358,24 +654,236 @@ document.addEventListener("DOMContentLoaded", function () {
   const offsetControls = document.getElementById("offset-controls");
   const timersListEl = document.getElementById("timersList");
   const addTimerBtn = document.getElementById("addTimer");
+  const showClockPanelBtn = document.getElementById("showClockPanel");
+  const showTimersPanelBtn = document.getElementById("showTimersPanel");
+  const showClockPanelFromTimersBtn = document.getElementById("showClockPanelFromTimers");
+  const showTimersPanelFromTimersBtn = document.getElementById("showTimersPanelFromTimers");
+  const timerEditorEl = document.getElementById("timerEditor");
+  const timerEditorTitleEl = document.getElementById("timerEditorTitle");
+  const timerLabelInput = document.getElementById("timerLabelInput");
+  const timerTargetInput = document.getElementById("timerTargetInput");
+  const saveTimerChangesBtn = document.getElementById("saveTimerChanges");
+  const resetSelectedTimerBtn = document.getElementById("resetSelectedTimer");
+  const deleteSelectedTimerBtn = document.getElementById("deleteSelectedTimer");
+  const manualClockInput = document.getElementById("manualClockInput");
+  const applyManualOffsetBtn = document.getElementById("applyManualOffset");
+  const applyManualClockBtn = document.getElementById("applyManualClock");
+  const resetManualClockBtn = document.getElementById("resetManualClock");
+  const manualOffsetStatus = document.getElementById("manualOffsetStatus");
+  const displayedTimeStatus = document.getElementById("displayedTimeStatus");
+  const showMillisecondsCheckbox = document.getElementById("showMilliseconds");
+  const showDateCheckbox = document.getElementById("showDate");
+  const timersSummaryEl = document.getElementById("timersSummary");
+  const shiftDirection = document.getElementById("shiftDirection");
+  const shiftDays = document.getElementById("shiftDays");
+  const shiftHours = document.getElementById("shiftHours");
+  const shiftMinutes = document.getElementById("shiftMinutes");
+  const shiftSeconds = document.getElementById("shiftSeconds");
+
+  function getDisplayTimezone() {
+    return sessionStorage.getItem("displayTimezone")
+      || localStorage.getItem("lastSyncTimezone")
+      || localStorage.getItem("lastUsedTimezone")
+      || "Europe/Warsaw";
+  }
+
+  function getSyncedNowUtc() {
+    return Date.now() + syncOffset;
+  }
+
+  function getDisplayNowUtc() {
+    return getSyncedNowUtc() + manualTimeOffset;
+  }
+
+  function formatDateTimeLocal(dt) {
+    return dt.toFormat("yyyy-LL-dd'T'HH:mm:ss");
+  }
+
+  function formatDuration(ms) {
+    if (!ms) return "0s";
+    const sign = ms >= 0 ? "+" : "-";
+    let remaining = Math.abs(ms);
+    const days = Math.floor(remaining / 86400000);
+    remaining -= days * 86400000;
+    const hours = Math.floor(remaining / 3600000);
+    remaining -= hours * 3600000;
+    const minutes = Math.floor(remaining / 60000);
+    remaining -= minutes * 60000;
+    const seconds = Math.floor(remaining / 1000);
+
+    const parts = [];
+    if (days) parts.push(`${days}d`);
+    if (hours || parts.length) parts.push(`${hours}h`);
+    if (minutes || parts.length) parts.push(`${minutes}m`);
+    parts.push(`${seconds}s`);
+    return `${sign}${parts.join(" ")}`;
+  }
+
+  function offsetToParts(ms) {
+    const sign = ms >= 0 ? '1' : '-1';
+    let remaining = Math.abs(ms);
+    const days = Math.floor(remaining / 86400000);
+    remaining -= days * 86400000;
+    const hours = Math.floor(remaining / 3600000);
+    remaining -= hours * 3600000;
+    const minutes = Math.floor(remaining / 60000);
+    remaining -= minutes * 60000;
+    const seconds = Math.floor(remaining / 1000);
+    return { sign, days, hours, minutes, seconds };
+  }
+
+  function setOffsetInputsFromMs(ms) {
+    if (!shiftDirection || !shiftDays || !shiftHours || !shiftMinutes || !shiftSeconds) return;
+    const parts = offsetToParts(ms);
+    if (document.activeElement !== shiftDirection) shiftDirection.value = parts.sign;
+    if (document.activeElement !== shiftDays) shiftDays.value = String(parts.days);
+    if (document.activeElement !== shiftHours) shiftHours.value = String(parts.hours);
+    if (document.activeElement !== shiftMinutes) shiftMinutes.value = String(parts.minutes);
+    if (document.activeElement !== shiftSeconds) shiftSeconds.value = String(parts.seconds);
+  }
+
+  function getOffsetInputsMs() {
+    const sign = Number(shiftDirection && shiftDirection.value) || 1;
+    const days = Math.max(0, Number(shiftDays && shiftDays.value) || 0);
+    const hours = Math.max(0, Number(shiftHours && shiftHours.value) || 0);
+    const minutes = Math.max(0, Number(shiftMinutes && shiftMinutes.value) || 0);
+    const seconds = Math.max(0, Number(shiftSeconds && shiftSeconds.value) || 0);
+    const total = (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
+    return sign * total;
+  }
+
+  function refreshManualClockUi() {
+    const tz = getDisplayTimezone();
+    const displayNow = luxon.DateTime.fromMillis(getDisplayNowUtc(), { zone: "utc" }).setZone(tz);
+    if (manualClockInput && document.activeElement !== manualClockInput) {
+      manualClockInput.value = formatDateTimeLocal(displayNow);
+    }
+    setOffsetInputsFromMs(manualTimeOffset);
+    if (displayedTimeStatus) {
+      displayedTimeStatus.textContent = `Current displayed time: ${displayNow.toFormat("yyyy-LL-dd HH:mm:ss")}`;
+    }
+    if (manualOffsetStatus) {
+      manualOffsetStatus.textContent = manualTimeOffset === 0
+        ? "Shift: off"
+        : `Shift: ${formatDuration(manualTimeOffset)}`;
+    }
+  }
+
+  function timerDisplayName(t) {
+    return (t.label && t.label.trim()) || t.id;
+  }
+
+  function timerPreviewText(t) {
+    if (!t.targetUtc || !t.iso) return "No target set";
+    const tz = getDisplayTimezone();
+    const dt = luxon.DateTime.fromMillis(t.targetUtc, { zone: "utc" }).setZone(tz);
+    return dt.toFormat("yyyy-LL-dd HH:mm:ss");
+  }
+
+  function timerStateText(t) {
+    if (!t.enabled) return "off";
+    if (!t.targetUtc) return "empty";
+    if (t.finished) return "done";
+    return "active";
+  }
+
+  function refreshTimerRowUi(row, t) {
+    if (!row || !t) return;
+    const nameEl = row.querySelector('.timer-name');
+    const previewEl = row.querySelector('.timer-preview');
+    const stateEl = row.querySelector('.timer-state');
+    const enableCb = row.querySelector('.enableTimer');
+    if (nameEl) nameEl.textContent = timerDisplayName(t);
+    if (previewEl) previewEl.textContent = timerPreviewText(t);
+    if (stateEl) stateEl.textContent = timerStateText(t);
+    if (enableCb) enableCb.checked = !!t.enabled;
+  }
+
+  function refreshTimersSummary() {
+    if (!timersSummaryEl) return;
+    const total = timers.length;
+    const active = timers.filter(t => t.enabled && t.targetUtc !== null).length;
+    timersSummaryEl.innerHTML = `<span>${total} timers</span><span>${active} active</span>`;
+  }
+
+  function findTimerById(id) {
+    return timers.find(t => t.id === id) || null;
+  }
+
+  function selectTimer(id) {
+    selectedTimerId = id;
+    refreshTimerEditor();
+    refreshTimerListSelection();
+  }
+
+  function refreshTimerListSelection() {
+    if (!timersListEl) return;
+    const rows = timersListEl.querySelectorAll('.timer-row');
+    rows.forEach((row) => {
+      row.classList.toggle('selected', row.dataset.id === selectedTimerId);
+    });
+  }
+
+  function refreshTimerEditor() {
+    if (!timerEditorEl) return;
+    const t = findTimerById(selectedTimerId);
+    if (!t) {
+      timerEditorEl.classList.add('hidden');
+      return;
+    }
+    timerEditorEl.classList.remove('hidden');
+    if (timerEditorTitleEl) timerEditorTitleEl.textContent = `Editing ${timerDisplayName(t)}`;
+    if (timerLabelInput) timerLabelInput.value = t.label || '';
+    if (timerTargetInput) timerTargetInput.value = t.iso || '';
+  }
+
+  function syncPanelTabButtons() {
+    const isClock = activePanelView === 'clock';
+    if (showClockPanelBtn) showClockPanelBtn.classList.toggle('active', isClock);
+    if (showTimersPanelBtn) showTimersPanelBtn.classList.toggle('active', !isClock);
+    if (showClockPanelFromTimersBtn) showClockPanelFromTimersBtn.classList.toggle('active', isClock);
+    if (showTimersPanelFromTimersBtn) showTimersPanelFromTimersBtn.classList.toggle('active', !isClock);
+  }
+
+  function setPanelView(view) {
+    activePanelView = view === 'timers' ? 'timers' : 'clock';
+    offsetControls.style.display = activePanelView === 'clock' ? 'block' : 'none';
+    timerControls.style.display = activePanelView === 'timers' ? 'block' : 'none';
+    syncPanelTabButtons();
+    positionControlPanels();
+    scaleToFitWindow();
+  }
+
+  function toggleControls() {
+    const controlsVisible = offsetControls.style.display === 'block' || timerControls.style.display === 'block';
+    if (controlsVisible) {
+      offsetControls.style.display = 'none';
+      timerControls.style.display = 'none';
+    } else {
+      setPanelView(activePanelView);
+    }
+  }
 
   // --- Aktualizacja zegara i timerów ---
   let lastSecond = -1;
   let currentTzOffsetForSavedZone = null;
 
   function updateClock() {
-    const tz = sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
-    const nowUtc = Date.now() + timeOffset;
+    const tz = getDisplayTimezone();
+    const nowUtc = getDisplayNowUtc();
     const localNow = luxon.DateTime.fromMillis(nowUtc, { zone: "utc" }).setZone(tz);
 
     const h = String(localNow.hour).padStart(2, '0');
     const m = String(localNow.minute).padStart(2, '0');
     const s = String(localNow.second).padStart(2, '0');
     const cs = String(Math.floor(localNow.millisecond / 10)).padStart(2, '0');
-    output.innerText = `${h}:${m}:${s}.${cs}`;
+    output.innerText = showMillisecondsCheckbox && showMillisecondsCheckbox.checked
+      ? `${h}:${m}:${s}.${cs}`
+      : `${h}:${m}:${s}`;
 
     const year = localNow.year, month = String(localNow.month).padStart(2, '0'), day = String(localNow.day).padStart(2, '0');
     dateEl.innerText = `${year}.${month}.${day}`;
+    dateEl.style.display = showDateCheckbox && showDateCheckbox.checked ? 'block' : 'none';
 
     try {
       const currentOffset = localNow.offset;
@@ -424,7 +932,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     for (const t of timers) updateTimerElement(t);
+    for (const t of timers) {
+      const row = timersListEl ? timersListEl.querySelector(`.timer-row[data-id="${t.id}"]`) : null;
+      refreshTimerRowUi(row, t);
+    }
 
+    refreshManualClockUi();
+    refreshTimersSummary();
     applyLayout();
   }
 
@@ -454,8 +968,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const utc = luxon.DateTime.fromISO(data.utc, { zone: "utc" });
         serverTime = utc.toMillis();
       }
-      timeOffset = serverTime - Date.now();
-      localStorage.setItem("lastValidOffset", timeOffset);
+      syncOffset = serverTime - Date.now();
+      localStorage.setItem("lastValidOffset", syncOffset);
       localStorage.setItem("lastSyncTimezone", tz);
       updateClock();
       status.textContent = "Ω";
@@ -494,6 +1008,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     return maxW;
   }
+  function positionControlPanels() {
+    if (!offsetControls || !timerControls) return;
+    offsetControls.style.top = '20px';
+    timerControls.style.top = '20px';
+    offsetControls.style.maxHeight = 'calc(100vh - 40px)';
+    timerControls.style.maxHeight = 'calc(100vh - 40px)';
+  }
   function scaleToFitWindow() {
     const wrapper = document.getElementById('wrapper');
     if (!wrapper) return;
@@ -512,7 +1033,10 @@ document.addEventListener("DOMContentLoaded", function () {
       wrapper.style.top = `${(window.innerHeight - 1080 * scale) / 2}px`;
     }
   }
-  window.addEventListener('resize', scaleToFitWindow);
+  window.addEventListener('resize', () => {
+    positionControlPanels();
+    scaleToFitWindow();
+  });
   scaleToFitWindow();
 
   function getVisibleTimerIds() {
@@ -534,7 +1058,7 @@ document.addEventListener("DOMContentLoaded", function () {
     dateEl.style.left = '50%';
     dateEl.style.fontSize = '50px';
     dateEl.style.letterSpacing = '-0.01em';
-    dateEl.style.display = 'block';
+    dateEl.style.display = showDateCheckbox && showDateCheckbox.checked ? 'block' : 'none';
 
     const visible = getVisibleTimerIds();
     const baseTimerPx = 60;
@@ -661,7 +1185,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (svgEl) svgEl.style.display = 'none';
 
     const timerIds = getVisibleTimerIds();
-    const ids = [...timerIds, 'output', 'date'];
+    const ids = showDateCheckbox && showDateCheckbox.checked
+      ? [...timerIds, 'output', 'date']
+      : [...timerIds, 'output'];
 
     const panelW = getVisiblePanelWidth();
     const availW = Math.floor((window.innerWidth - panelW) * 0.995);
@@ -696,7 +1222,11 @@ document.addEventListener("DOMContentLoaded", function () {
     function currentText(id) {
       const el = document.getElementById(id);
       if (el && el.innerText) return el.innerText.trim();
-      if (id === 'output') return '08:08:08.88';
+      if (id === 'output') {
+        return showMillisecondsCheckbox && showMillisecondsCheckbox.checked
+          ? '08:08:08.88'
+          : '08:08:08';
+      }
       if (id === 'date') return '2025.09.01';
       return '-0:00:00';
     }
@@ -790,39 +1320,31 @@ document.addEventListener("DOMContentLoaded", function () {
     const row = document.createElement('div');
     row.className = 'timer-row';
     row.dataset.id = t.id;
-    row.style.borderBottom = '1px solid #ddd';
-    row.style.padding = '6px 0';
     row.innerHTML = `
-      <label class="switch" style="vertical-align:middle;">
-        <input type="checkbox" class="enableTimer" ${t.enabled ? 'checked' : ''}>
-        <span class="slider"></span>
-      </label>
-      <span style="margin-left:4px;">Enable</span><br>
-      <label>Label:
-        <input type="text" class="labelInput" placeholder="e.g. Start" style="width: 95%;" value="${t.label || ''}">
-      </label><br>
-      <label>Target:
-        <input type="datetime-local" class="datetimeInput" style="width: 95%;" value="${t.iso || ''}">
-      </label><br>
-      <div style="margin-top:6px;">
+      <div class="timer-topline">
+        <label class="switch">
+          <input type="checkbox" class="enableTimer" ${t.enabled ? 'checked' : ''}>
+          <span class="slider"></span>
+        </label>
+        <div class="timer-name"></div>
+        <div class="timer-preview"></div>
+        <div class="timer-state"></div>
+      </div>
+      <div class="button-row">
         <button class="resetTimer">Reset</button>
-        <button class="deleteTimer" style="margin-left:6px;">Delete</button>
+        <button class="deleteTimer">Delete</button>
       </div>
     `;
 
+    function refreshRow() {
+      refreshTimerRowUi(row, t);
+    }
+
     const enableCb = row.querySelector('.enableTimer');
-    enableCb.addEventListener('change', () => { t.enabled = !!enableCb.checked; updateClock(); });
-
-    const labelInp = row.querySelector('.labelInput');
-    labelInp.addEventListener('input', () => { t.label = (labelInp.value || '').trim(); updateClock(); });
-
-    const dtInp = row.querySelector('.datetimeInput');
-    dtInp.addEventListener('change', () => {
-      const iso = dtInp.value || null;
-      t.iso = iso;
-      const tz = sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
-      t.targetUtc = iso ? isoToUtcMillis(iso, tz) : null;
-      t.finished = false;
+    enableCb.addEventListener('change', (e) => {
+      e.stopPropagation();
+      t.enabled = !!enableCb.checked;
+      refreshRow();
       updateClock();
     });
 
@@ -830,7 +1352,8 @@ document.addEventListener("DOMContentLoaded", function () {
       t.iso = null; t.targetUtc = null; t.finished = false;
       const el = document.getElementById(t.id);
       if (el) { el.innerText = ""; el.style.color = "white"; el.style.display = "none"; }
-      dtInp.value = "";
+      refreshRow();
+      refreshTimerEditor();
       updateClock();
     });
 
@@ -840,9 +1363,18 @@ document.addEventListener("DOMContentLoaded", function () {
       const el = document.getElementById(t.id);
       if (el && el.parentNode) el.parentNode.removeChild(el);
       if (row && row.parentNode) row.parentNode.removeChild(row);
+      if (selectedTimerId === t.id) {
+        selectedTimerId = timers[0] ? timers[0].id : null;
+        refreshTimerEditor();
+      }
       updateClock();
     });
 
+    row.addEventListener('click', () => {
+      selectTimer(t.id);
+    });
+
+    refreshRow();
     return row;
   }
 
@@ -862,11 +1394,57 @@ document.addEventListener("DOMContentLoaded", function () {
     const row = makeTimerRow(t);
     timersListEl.appendChild(row);
 
+    selectTimer(id);
     applyLayout();
     return t;
   }
 
   if (addTimerBtn) addTimerBtn.addEventListener('click', () => addTimer());
+
+  if (saveTimerChangesBtn) {
+    saveTimerChangesBtn.addEventListener('click', () => {
+      const t = findTimerById(selectedTimerId);
+      if (!t) return;
+      t.label = (timerLabelInput && timerLabelInput.value || '').trim();
+      const iso = timerTargetInput && timerTargetInput.value || null;
+      t.iso = iso;
+      const tz = getDisplayTimezone();
+      t.targetUtc = iso ? isoToUtcMillis(iso, tz) : null;
+      t.finished = false;
+      const row = timersListEl.querySelector(`.timer-row[data-id="${t.id}"]`);
+      refreshTimerRowUi(row, t);
+      refreshTimerEditor();
+      updateClock();
+    });
+  }
+
+  if (resetSelectedTimerBtn) {
+    resetSelectedTimerBtn.addEventListener('click', () => {
+      const t = findTimerById(selectedTimerId);
+      if (!t) return;
+      t.iso = null;
+      t.targetUtc = null;
+      t.finished = false;
+      refreshTimerEditor();
+      updateClock();
+    });
+  }
+
+  if (deleteSelectedTimerBtn) {
+    deleteSelectedTimerBtn.addEventListener('click', () => {
+      const t = findTimerById(selectedTimerId);
+      if (!t) return;
+      const row = timersListEl.querySelector(`.timer-row[data-id="${t.id}"]`);
+      if (row) row.remove();
+      const el = document.getElementById(t.id);
+      if (el) el.remove();
+      timers = timers.filter(x => x.id !== t.id);
+      selectedTimerId = timers[0] ? timers[0].id : null;
+      refreshTimerEditor();
+      refreshTimerListSelection();
+      updateClock();
+    });
+  }
 
   // Reset All
   const resetAllBtn = document.getElementById("resetTimers");
@@ -876,25 +1454,19 @@ document.addEventListener("DOMContentLoaded", function () {
         t.iso = null; t.targetUtc = null; t.finished = false;
         const el = document.getElementById(t.id);
         if (el) { el.innerText = ""; el.style.color = "white"; el.style.display = "none"; }
-        const inp = timersListEl.querySelector(`.timer-row[data-id="${t.id}"] .datetimeInput`);
-        if (inp) inp.value = "";
       }
+      refreshTimerEditor();
       updateClock();
     });
   }
 
-  // Startowo dodaj 6 timerów (możesz potem dowolnie dodawać/usuwać)
-  for (let i = 0; i < 6; i++) addTimer();
+  // Start with no timers; add them on demand.
 
   // Klik w zegar = panel ustawień
   output.addEventListener("click", () => {
-    const isVisible = offsetControls.style.display === "block";
-    const show = !isVisible;
-    offsetControls.style.display = show ? "block" : "none";
-    timerControls.style.display = show ? "block" : "none";
     offsetControls.style.zIndex = "10000";
     timerControls.style.zIndex = "10000";
-    scaleToFitWindow();
+    toggleControls();
   });
 
   // Inicjalizacja strefy czasu + serwera czasu
@@ -904,6 +1476,7 @@ document.addEventListener("DOMContentLoaded", function () {
     timezoneSelect.value = savedTz;
     timezoneSelect.addEventListener("change", () => {
       sessionStorage.setItem("displayTimezone", timezoneSelect.value);
+      localStorage.setItem("lastUsedTimezone", timezoneSelect.value);
       recomputeTargetsForTz(timezoneSelect.value);
       updateClock();
     });
@@ -921,6 +1494,60 @@ document.addEventListener("DOMContentLoaded", function () {
     apiInput.addEventListener("change", () => { localStorage.setItem("apiServer", apiInput.value); synchronizeTime(); });
   }
   initializeTimezone();
+
+  const savedShowMilliseconds = localStorage.getItem("showMilliseconds");
+  if (showMillisecondsCheckbox) {
+    showMillisecondsCheckbox.checked = savedShowMilliseconds !== "0";
+    showMillisecondsCheckbox.addEventListener("change", () => {
+      localStorage.setItem("showMilliseconds", showMillisecondsCheckbox.checked ? "1" : "0");
+      applyLayout();
+      updateClock();
+    });
+  }
+
+  const savedShowDate = localStorage.getItem("showDate");
+  if (showDateCheckbox) {
+    showDateCheckbox.checked = savedShowDate !== "0";
+    showDateCheckbox.addEventListener("change", () => {
+      localStorage.setItem("showDate", showDateCheckbox.checked ? "1" : "0");
+      applyLayout();
+      updateClock();
+    });
+  }
+
+  if (showClockPanelBtn) showClockPanelBtn.addEventListener('click', () => setPanelView('clock'));
+  if (showTimersPanelBtn) showTimersPanelBtn.addEventListener('click', () => setPanelView('timers'));
+  if (showClockPanelFromTimersBtn) showClockPanelFromTimersBtn.addEventListener('click', () => setPanelView('clock'));
+  if (showTimersPanelFromTimersBtn) showTimersPanelFromTimersBtn.addEventListener('click', () => setPanelView('timers'));
+
+  if (applyManualOffsetBtn) {
+    applyManualOffsetBtn.addEventListener("click", () => {
+      manualTimeOffset = getOffsetInputsMs();
+      localStorage.setItem("manualTimeOffset", String(manualTimeOffset));
+      updateClock();
+    });
+  }
+
+  if (applyManualClockBtn && manualClockInput) {
+    applyManualClockBtn.addEventListener("click", () => {
+      const iso = manualClockInput.value;
+      if (!iso) return;
+      const tz = getDisplayTimezone();
+      const desiredUtc = isoToUtcMillis(iso, tz);
+      if (desiredUtc == null || Number.isNaN(desiredUtc)) return;
+      manualTimeOffset = desiredUtc - getSyncedNowUtc();
+      localStorage.setItem("manualTimeOffset", String(manualTimeOffset));
+      updateClock();
+    });
+  }
+
+  if (resetManualClockBtn) {
+    resetManualClockBtn.addEventListener("click", () => {
+      manualTimeOffset = 0;
+      localStorage.setItem("manualTimeOffset", "0");
+      updateClock();
+    });
+  }
 
   // Ikona Ω i „Help”
   syncStatus.style.display = toggleSyncIcon.checked ? "block" : "none";
@@ -979,14 +1606,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const tag = (document.activeElement && document.activeElement.tagName) || '';
     if (['INPUT','TEXTAREA','SELECT'].includes(tag)) return;
     if (e.key === 's' || e.key === 'S') {
-      const isVisible = offsetControls.style.display === 'block';
-      const show = !isVisible;
-      offsetControls.style.display = show ? 'block' : 'none';
-      timerControls.style.display = show ? 'block' : 'none';
-      scaleToFitWindow();
+      toggleControls();
       return;
     }
-    if (e.key === 'g' || e.key === 'G') {
+      if (e.key === 'g' || e.key === 'G') {
       if (minimalModeCheckbox) {
         minimalModeCheckbox.checked = !minimalModeCheckbox.checked;
         localStorage.setItem('minimalMode', minimalModeCheckbox.checked ? '1' : '0');
@@ -1003,6 +1626,9 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Pierwszy layout
+  refreshManualClockUi();
+  syncPanelTabButtons();
+  positionControlPanels();
   applyLayout();
 }); // DOMContentLoaded
 
