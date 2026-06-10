@@ -597,6 +597,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // --- Stan synchronizacji czasu i dynamiczne timery ---
+  const APP_STATE_KEY = 'brcAppStateV1';
   let syncOffset = Number(localStorage.getItem("lastValidOffset")) || 0;
   let manualTimeOffset = Number(localStorage.getItem("manualTimeOffset")) || 0;
 
@@ -605,6 +606,10 @@ document.addEventListener("DOMContentLoaded", function () {
   let timerIdSeq = 1;
   let selectedTimerId = null;
   let activePanelView = 'clock';
+  let controlsOpen = false;
+  let persistTimer = null;
+  let lastPersistedStateRaw = null;
+  let pendingStateRaw = null;
 
   // --- Progi kolorów (globalnie) ---
   let warnOrangeMin = Number(localStorage.getItem('warnOrangeMin')) || 15;
@@ -636,7 +641,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // --- Parsowanie dat w wybranej strefie ---
   window.isoToUtcMillis = function(iso, tzOpt) {
     if (!iso) return null;
-    const tz = tzOpt || (sessionStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw");
+    const tz = tzOpt || (localStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw");
     return luxon.DateTime.fromISO(iso, { zone: tz }).toUTC().toMillis();
   };
   function recomputeTargetsForTz(tz) {
@@ -681,7 +686,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const shiftSeconds = document.getElementById("shiftSeconds");
 
   function getDisplayTimezone() {
-    return sessionStorage.getItem("displayTimezone")
+    return localStorage.getItem("displayTimezone")
       || localStorage.getItem("lastSyncTimezone")
       || localStorage.getItem("lastUsedTimezone")
       || "Europe/Warsaw";
@@ -752,6 +757,67 @@ document.addEventListener("DOMContentLoaded", function () {
     return sign * total;
   }
 
+  function serializeAppState() {
+    return {
+      timers: timers.map((t) => ({
+        id: t.id,
+        enabled: !!t.enabled,
+        label: t.label || '',
+        iso: t.iso || null
+      })),
+      timerIdSeq,
+      selectedTimerId,
+      activePanelView,
+      controlsOpen
+    };
+  }
+
+  function flushPersistedState() {
+    if (!pendingStateRaw || pendingStateRaw === lastPersistedStateRaw) return;
+    try {
+      localStorage.setItem(APP_STATE_KEY, pendingStateRaw);
+      lastPersistedStateRaw = pendingStateRaw;
+      pendingStateRaw = null;
+    } catch (err) {
+      console.error('Failed to persist app state:', err);
+    }
+  }
+
+  function persistAppState(options = {}) {
+    const raw = JSON.stringify(serializeAppState());
+    if (raw === lastPersistedStateRaw || raw === pendingStateRaw) return;
+    pendingStateRaw = raw;
+
+    if (persistTimer) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
+
+    if (options.immediate) {
+      flushPersistedState();
+      return;
+    }
+
+    persistTimer = setTimeout(() => {
+      persistTimer = null;
+      flushPersistedState();
+    }, 150);
+  }
+
+  function loadAppState() {
+    try {
+      const raw = localStorage.getItem(APP_STATE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return null;
+      lastPersistedStateRaw = raw;
+      return parsed;
+    } catch (err) {
+      console.error('Failed to load app state:', err);
+      return null;
+    }
+  }
+
   function refreshManualClockUi() {
     const tz = getDisplayTimezone();
     const displayNow = luxon.DateTime.fromMillis(getDisplayNowUtc(), { zone: "utc" }).setZone(tz);
@@ -814,6 +880,7 @@ document.addEventListener("DOMContentLoaded", function () {
     selectedTimerId = id;
     refreshTimerEditor();
     refreshTimerListSelection();
+    persistAppState();
   }
 
   function refreshTimerListSelection() {
@@ -847,21 +914,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function setPanelView(view) {
     activePanelView = view === 'timers' ? 'timers' : 'clock';
-    offsetControls.style.display = activePanelView === 'clock' ? 'block' : 'none';
-    timerControls.style.display = activePanelView === 'timers' ? 'block' : 'none';
+    offsetControls.style.display = controlsOpen && activePanelView === 'clock' ? 'block' : 'none';
+    timerControls.style.display = controlsOpen && activePanelView === 'timers' ? 'block' : 'none';
     syncPanelTabButtons();
     positionControlPanels();
     scaleToFitWindow();
+    persistAppState();
   }
 
   function toggleControls() {
-    const controlsVisible = offsetControls.style.display === 'block' || timerControls.style.display === 'block';
-    if (controlsVisible) {
+    controlsOpen = !controlsOpen;
+    if (!controlsOpen) {
       offsetControls.style.display = 'none';
       timerControls.style.display = 'none';
     } else {
       setPanelView(activePanelView);
+      return;
     }
+    persistAppState();
   }
 
   // --- Aktualizacja zegara i timerów ---
@@ -955,7 +1025,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const response = await fetch(`${apiBase}/api/Time/current/zone?timeZone=${encodeURIComponent(tz)}`);
         if (!response.ok) throw new Error("API time fetch error");
         const data = await response.json();
-        serverTime = new Date(data.dateTime).getTime();
+        const zonedApiTime = luxon.DateTime.fromISO(data.dateTime, { zone: tz });
+        if (!zonedApiTime.isValid) throw new Error("Invalid API time payload");
+        serverTime = zonedApiTime.toUTC().toMillis();
       } else {
         const ntpAddr = document.getElementById("ntpServerInput").value.trim();
         if (!ntpAddr) throw new Error("No NTP server address set");
@@ -983,8 +1055,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function loop() { updateClock(); requestAnimationFrame(loop); }
   requestAnimationFrame(loop);
-  synchronizeTime();
-  setInterval(synchronizeTime, 300000);
 
   // --- Tryb minimalny i layout ---
   function isMinimalMode() {
@@ -1354,6 +1424,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (el) { el.innerText = ""; el.style.color = "white"; el.style.display = "none"; }
       refreshRow();
       refreshTimerEditor();
+      persistAppState();
       updateClock();
     });
 
@@ -1367,6 +1438,7 @@ document.addEventListener("DOMContentLoaded", function () {
         selectedTimerId = timers[0] ? timers[0].id : null;
         refreshTimerEditor();
       }
+      persistAppState();
       updateClock();
     });
 
@@ -1395,6 +1467,7 @@ document.addEventListener("DOMContentLoaded", function () {
     timersListEl.appendChild(row);
 
     selectTimer(id);
+    persistAppState();
     applyLayout();
     return t;
   }
@@ -1414,6 +1487,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const row = timersListEl.querySelector(`.timer-row[data-id="${t.id}"]`);
       refreshTimerRowUi(row, t);
       refreshTimerEditor();
+      persistAppState();
       updateClock();
     });
   }
@@ -1426,6 +1500,7 @@ document.addEventListener("DOMContentLoaded", function () {
       t.targetUtc = null;
       t.finished = false;
       refreshTimerEditor();
+      persistAppState();
       updateClock();
     });
   }
@@ -1442,8 +1517,53 @@ document.addEventListener("DOMContentLoaded", function () {
       selectedTimerId = timers[0] ? timers[0].id : null;
       refreshTimerEditor();
       refreshTimerListSelection();
+      persistAppState();
       updateClock();
     });
+  }
+
+  function restoreTimersFromState(state) {
+    if (!state || !Array.isArray(state.timers)) return;
+    timers = [];
+    timersListEl.innerHTML = '';
+    const wrapper = document.getElementById('wrapper');
+    if (wrapper) {
+      wrapper.querySelectorAll('.timer').forEach((el) => el.remove());
+    }
+    let maxNumericId = 0;
+    for (const saved of state.timers) {
+      const id = saved && saved.id ? String(saved.id) : `timer${timerIdSeq++}`;
+      const disp = document.createElement('div');
+      disp.id = id;
+      disp.className = 'timer';
+      disp.style.top = '15%';
+      disp.style.left = '50%';
+      disp.style.display = 'none';
+      if (wrapper) wrapper.appendChild(disp);
+
+      const t = {
+        id,
+        enabled: saved.enabled !== false,
+        label: saved.label || '',
+        iso: saved.iso || null,
+        targetUtc: saved.iso ? isoToUtcMillis(saved.iso, getDisplayTimezone()) : null,
+        finished: false
+      };
+      timers.push(t);
+      timersListEl.appendChild(makeTimerRow(t));
+
+      const match = /^timer(\d+)$/.exec(id);
+      if (match) maxNumericId = Math.max(maxNumericId, Number(match[1]));
+    }
+    timerIdSeq = Math.max(Number(state.timerIdSeq) || 1, maxNumericId + 1);
+    selectedTimerId = state.selectedTimerId && findTimerById(state.selectedTimerId)
+      ? state.selectedTimerId
+      : (timers[0] ? timers[0].id : null);
+    if (selectedTimerId) selectTimer(selectedTimerId);
+    else {
+      refreshTimerEditor();
+      refreshTimerListSelection();
+    }
   }
 
   // Reset All
@@ -1456,6 +1576,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (el) { el.innerText = ""; el.style.color = "white"; el.style.display = "none"; }
       }
       refreshTimerEditor();
+      persistAppState();
       updateClock();
     });
   }
@@ -1471,11 +1592,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Inicjalizacja strefy czasu + serwera czasu
   function initializeTimezone() {
-    const savedDisplay = sessionStorage.getItem("displayTimezone");
+    const savedDisplay = localStorage.getItem("displayTimezone");
     const savedTz = savedDisplay || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
     timezoneSelect.value = savedTz;
     timezoneSelect.addEventListener("change", () => {
-      sessionStorage.setItem("displayTimezone", timezoneSelect.value);
+      localStorage.setItem("displayTimezone", timezoneSelect.value);
       localStorage.setItem("lastUsedTimezone", timezoneSelect.value);
       recomputeTargetsForTz(timezoneSelect.value);
       updateClock();
@@ -1494,6 +1615,21 @@ document.addEventListener("DOMContentLoaded", function () {
     apiInput.addEventListener("change", () => { localStorage.setItem("apiServer", apiInput.value); synchronizeTime(); });
   }
   initializeTimezone();
+
+  const savedAppState = loadAppState();
+  if (savedAppState) {
+    activePanelView = savedAppState.activePanelView === 'timers' ? 'timers' : 'clock';
+    controlsOpen = !!savedAppState.controlsOpen;
+    restoreTimersFromState(savedAppState);
+  }
+
+  window.addEventListener('beforeunload', () => persistAppState({ immediate: true }));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') persistAppState({ immediate: true });
+  });
+
+  synchronizeTime();
+  setInterval(synchronizeTime, 300000);
 
   const savedShowMilliseconds = localStorage.getItem("showMilliseconds");
   if (showMillisecondsCheckbox) {
@@ -1628,6 +1764,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // Pierwszy layout
   refreshManualClockUi();
   syncPanelTabButtons();
+  if (controlsOpen) setPanelView(activePanelView);
+  else {
+    offsetControls.style.display = 'none';
+    timerControls.style.display = 'none';
+  }
   positionControlPanels();
   applyLayout();
 }); // DOMContentLoaded
