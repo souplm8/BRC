@@ -9,7 +9,7 @@
       display: inline-block;
       width: 37.5px;
       height: 18px;
-      margin-right: 10px;
+      margin-right: 0;
       transform: scale(0.75);
       transform-origin: left center;
     }
@@ -150,15 +150,17 @@
       overflow-y: auto;
       box-sizing: border-box;
       padding-right: 8px; /* space for scrollbar */
+      width: 560px;
     }
     .control-panel {
-      width: 332px;
-      background: rgba(255,255,255,0.96);
-      color: #111;
+      width: 348px;
+      background: rgba(14, 17, 22, 0.92);
+      color: #eef2f7;
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 8px;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.28);
+      box-shadow: 0 18px 48px rgba(0,0,0,0.42);
       text-align: left;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(14px);
     }
     .control-panel label,
     .control-panel span,
@@ -171,24 +173,26 @@
     }
     .control-panel hr {
       border: 0;
-      border-top: 1px solid #d7d7d7;
-      margin: 12px 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      margin: 14px 0;
     }
     .control-panel .panel-section + .panel-section {
-      margin-top: 12px;
+      margin-top: 14px;
     }
     .control-panel .section-title {
-      font-size: 18px;
+      font-size: 19px;
       font-weight: 700;
-      margin: 0 0 8px;
-      text-align: center;
+      margin: 0 0 10px;
+      text-align: left;
+      color: #f6f8fb;
+      letter-spacing: 0;
     }
     .control-panel .field-row {
       display: grid;
       grid-template-columns: 92px minmax(0, 1fr);
       align-items: center;
       gap: 8px;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .control-panel .field-row.compact-2 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -201,9 +205,11 @@
       min-width: 0;
     }
     .control-panel .field-label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      color: #333;
+      color: #9ea7b3;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
       line-height: 1.2;
     }
     .control-panel input[type="text"],
@@ -213,122 +219,343 @@
       width: 100%;
       min-width: 0;
       box-sizing: border-box;
-      height: 30px;
-      padding: 4px 8px;
-      border: 1px solid #bfc4cc;
+      height: 34px;
+      padding: 5px 10px;
+      border: 1px solid rgba(255,255,255,0.12);
       border-radius: 6px;
-      background: #fff;
-      font-size: 14px;
+      background: rgba(255,255,255,0.05);
+      color: #f4f7fb;
+      font-size: 13px;
     }
     .control-panel button {
-      height: 30px;
-      padding: 0 10px;
-      border: 1px solid #bfc4cc;
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(255,255,255,0.12);
       border-radius: 6px;
-      background: #f3f4f6;
-      color: #111;
-      font-size: 14px;
+      background: rgba(255,255,255,0.06);
+      color: #f4f7fb;
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    }
+    .control-panel button:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.22);
     }
     .control-panel .button-row {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
-      margin-top: 8px;
+      margin-top: 10px;
     }
     .control-panel .toggle-row {
       display: grid;
       grid-template-columns: 34px 1fr;
       align-items: center;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .control-panel .status-box {
-      padding: 8px 10px;
+      padding: 10px 11px;
       border-radius: 6px;
-      background: #f3f4f6;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
       font-size: 12px;
-      line-height: 1.35;
-      color: #333;
+      line-height: 1.45;
+      color: #dbe3ec;
     }
     .control-panel .subtle {
       font-size: 12px;
-      color: #666;
+      color: #8f99a6;
     }
     .control-panel .summary-line {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 8px;
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: 12px;
-      color: #666;
+      color: #8f99a6;
     }
     .control-panel .tab-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .control-panel .tab-btn {
+      background: rgba(255,255,255,0.04);
+      color: #a7b0bc;
+      border-color: rgba(255,255,255,0.08);
     }
     .control-panel .tab-btn.active {
-      background: #111;
+      background: rgba(255,255,255,0.14);
       color: #fff;
-      border-color: #111;
+      border-color: rgba(255,255,255,0.16);
+    }
+    .control-panel .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 12px 0 10px;
+    }
+    .control-panel .mode-btn.active {
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+      border-color: rgba(255,255,255,0.16);
     }
     .control-panel .section-subtitle {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      color: #444;
-      margin: 0 0 6px;
+      color: #8f99a6;
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .timers-workspace {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .timer-list-panel,
+    .editor-card {
+      padding: 11px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+    }
+    .timer-list-panel {
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+    }
+    .timer-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.02);
+    }
+    .timer-table th {
+      font-size: 10px;
+      font-weight: 700;
+      color: #7f8996;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-align: left;
+      padding: 8px 10px;
+      white-space: nowrap;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+    }
+    .timer-table td {
+      padding: 8px 10px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px;
+      color: #dce3eb;
+      vertical-align: middle;
     }
     .timer-row {
-      border-bottom: 1px solid #e2e2e2;
-      padding: 10px 0;
       cursor: pointer;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
-    .timer-row.selected {
-      background: #f5f7fb;
-      border-radius: 6px;
-      padding-left: 8px;
-      padding-right: 8px;
+    .timer-row:hover td {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.14);
     }
-    .timer-topline {
+    .timer-row.selected td {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.18);
+    }
+    .timer-main-cell {
+      min-width: 0;
+    }
+    .timer-main-grid {
       display: grid;
-      grid-template-columns: 34px minmax(0, 1fr) auto auto;
+      gap: 8px;
+      min-width: 0;
+    }
+    .timer-summary {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+    .timer-summary-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f4f7fb;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .timer-summary-target {
+      font-size: 12px;
+      color: #8f99a6;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-variant-numeric: tabular-nums;
+    }
+    .timer-editor-inline {
+      display: none;
+      gap: 8px;
+      min-width: 0;
+    }
+    .timer-row.selected .timer-editor-inline {
+      display: grid;
+    }
+    .timer-row.selected .timer-summary {
+      display: none;
+    }
+    .timer-inline-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+      min-width: 0;
+    }
+    .timer-table .table-input {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      height: 36px;
+      padding: 7px 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px;
+      background: rgba(255,255,255,0.04);
+      color: #f4f7fb;
+      font-size: 13px;
+    }
+    .timer-target-stack {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 48px;
       gap: 8px;
       align-items: center;
     }
-    .timer-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #222;
-      min-width: 0;
+    .timer-date-input,
+    .timer-time-input {
+      font-variant-numeric: tabular-nums;
+    }
+    .target-hint {
+      font-size: 11px;
+      color: #8f99a6;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .timer-remaining {
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .timer-state-text {
+      font-size: 11px;
+      color: #8f99a6;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
     .timer-state {
       font-size: 11px;
-      color: #666;
+      color: #9ea7b3;
       white-space: nowrap;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
     }
-    .timer-preview {
-      font-size: 12px;
-      color: #555;
-      line-height: 1.25;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .timer-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: stretch;
     }
-    .editor-card {
-      padding: 10px;
-      border: 1px solid #d7dbe2;
-      border-radius: 8px;
-      background: #f9fafb;
+    .timer-actions button {
+      height: 32px;
+      padding: 0 6px;
+      font-size: 11px;
+    }
+    .toggleTimerRow.is-on {
+      border-color: rgba(120,180,255,0.45);
+      background: rgba(33,150,243,0.18);
+      color: #e8f3ff;
+      font-weight: 700;
+    }
+    .toggleTimerRow.is-off {
+      color: #9ea7b3;
+    }
+    .clearTimerRow {
+      border-color: rgba(120,180,255,0.45);
+      background: rgba(33,150,243,0.14);
+      color: #e8f3ff;
+      font-weight: 700;
+    }
+    .clearTimerRow:hover {
+      background: rgba(33,150,243,0.24);
+      border-color: rgba(120,180,255,0.65);
+    }
+    .timer-actions .danger {
+      border-color: rgba(255,120,120,0.22);
+      color: #ffd0d0;
+    }
+    .timers-list {
+      overflow-x: hidden;
+    }
+    .editor-card.sticky {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      backdrop-filter: blur(10px);
+    }
+    .timers-list {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 2px;
       margin-top: 10px;
+    }
+    .timer-table-empty {
+      padding: 18px 8px;
+      color: #8f99a6;
+      font-size: 12px;
+      text-align: center;
+    }
+    .editor-empty {
+      font-size: 12px;
+      color: #8f99a6;
+      line-height: 1.4;
+    }
+    .editor-card.disabled {
+      opacity: 0.78;
+    }
+    @media (max-width: 1500px) {
+      #timer-controls {
+        width: 460px;
+      }
+      .timer-list-panel {
+        min-height: 280px;
+      }
+    }
+    .control-panel input::placeholder {
+      color: #6f7a88;
+    }
+    .control-panel .panel-meta {
+      font-size: 10px;
+      color: #6f7a88;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
     }
     .editor-card.hidden {
       display: none;
+    }
+    .hidden {
+      display: none !important;
     }
     /* tighter vertical metrics so elements can sit closer to each other */
     .timer, #output, #date { line-height: 0.78; }
@@ -356,6 +583,7 @@
       <button id="showTimersPanel" class="tab-btn" type="button">Timers</button>
     </div>
     <div class="panel-section">
+      <div class="panel-meta">Display</div>
       <div class="field-row">
         <label class="field-label" for="timezoneSelect">Timezone</label>
         <select id="timezoneSelect">
@@ -401,6 +629,9 @@
          table of offsets, the dropdown itself will append fixed abbreviations (e.g., CET)
          to each zone's label.  This keeps the interface uncluttered while still
          conveying the abbreviation. -->
+    </div>
+    <div class="panel-section">
+      <div class="panel-meta">Sync</div>
       <div class="field-row">
         <label class="field-label" for="timeSourceSelect">Time source</label>
         <select id="timeSourceSelect">
@@ -416,8 +647,6 @@
         <label class="field-label" for="apiServerInput">API server</label>
         <input type="text" id="apiServerInput" placeholder="e.g. https://timeapi.io" />
       </div>
-    </div>
-    <div class="panel-section">
       <div class="toggle-row">
         <label class="switch">
           <input type="checkbox" id="toggleSyncIcon" checked>
@@ -425,6 +654,9 @@
         </label>
         <span>Show sync icon</span>
       </div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-meta">View</div>
       <div class="toggle-row">
         <label class="switch">
           <input type="checkbox" id="minimalMode">
@@ -442,9 +674,14 @@
     </div>
     <hr>
     <div class="panel-section">
+      <div class="panel-meta">Time Control</div>
       <div class="section-title">Clock Shift</div>
       <div id="displayedTimeStatus" class="status-box"></div>
-      <div style="margin-top:10px;">
+      <div class="mode-switch">
+        <button id="shiftModeOffset" class="mode-btn active" type="button">Offset</button>
+        <button id="shiftModeExact" class="mode-btn" type="button">Exact time</button>
+      </div>
+      <div id="shiftOffsetSection" style="margin-top:4px;">
         <div class="field-row">
           <label class="field-label" for="shiftDirection">Direction</label>
           <select id="shiftDirection">
@@ -477,17 +714,20 @@
       <div class="button-row">
         <button id="applyManualOffset">Apply Offset</button>
       </div>
-      <div style="margin-top:12px;">
+      <div id="shiftExactSection" class="hidden" style="margin-top:4px;">
         <div class="section-subtitle">Set Exact Date/Time</div>
         <input type="datetime-local" id="manualClockInput" step="1" style="width: 100%;" />
+        <div class="button-row">
+          <button id="applyManualClock">Set Clock</button>
+        </div>
       </div>
       <div class="button-row">
-        <button id="applyManualClock">Set Clock</button>
         <button id="resetManualClock">Reset Shift</button>
       </div>
       <div id="manualOffsetStatus" class="subtle" style="margin-top:8px; text-align:center;"></div>
     </div>
     <div class="panel-section">
+      <div class="panel-meta">Clock Output</div>
       <div class="toggle-row" style="margin-bottom:0;">
         <label class="switch">
           <input type="checkbox" id="showMilliseconds" checked>
@@ -510,6 +750,7 @@
       <button id="showTimersPanelFromTimers" class="tab-btn active" type="button">Timers</button>
     </div>
     <div class="panel-section">
+      <div class="panel-meta">Timer Control</div>
       <div class="section-title">Timers</div>
       <div class="button-row" style="justify-content:center;">
         <button id="addTimer">Add Timer</button>
@@ -519,26 +760,28 @@
         <span>0 timers</span>
         <span>0 active</span>
       </div>
-      <div id="timerEditor" class="editor-card hidden">
-        <div id="timerEditorTitle" class="section-subtitle">Timer</div>
-        <div class="field-block" style="margin-bottom:8px;">
-          <label class="field-label" for="timerLabelInput">Label</label>
-          <input type="text" id="timerLabelInput" placeholder="e.g. Start">
-        </div>
-        <div class="field-block">
-          <label class="field-label" for="timerTargetInput">Target</label>
-          <input type="datetime-local" id="timerTargetInput" step="1">
-        </div>
-        <div class="button-row">
-          <button id="saveTimerChanges">Save</button>
-          <button id="resetSelectedTimer">Reset</button>
-          <button id="deleteSelectedTimer">Delete</button>
+    </div>
+    <div class="timers-workspace">
+      <div class="timer-list-panel">
+        <div class="section-subtitle">Timer list</div>
+        <div class="timers-list">
+          <table class="timer-table">
+            <thead>
+              <tr>
+                <th>Timer</th>
+                <th style="width:108px;">Remaining</th>
+                <th style="width:64px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="timersList"></tbody>
+          </table>
+          <div id="timersEmpty" class="timer-table-empty hidden">No timers yet.</div>
         </div>
       </div>
     </div>
-    <div id="timersList" style="margin-top:8px;"></div>
     <hr>
     <div class="panel-section">
+      <div class="panel-meta">Alert Rules</div>
       <div class="section-title" style="font-size:16px;">Color Thresholds</div>
       <div class="field-row">
         <label class="field-label" for="colorPreset">Preset</label>
@@ -598,23 +841,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- Stan synchronizacji czasu i dynamiczne timery ---
   const APP_STATE_KEY = 'brcAppStateV1';
-  let syncOffset = Number(localStorage.getItem("lastValidOffset")) || 0;
-  let manualTimeOffset = Number(localStorage.getItem("manualTimeOffset")) || 0;
-
-  // Kolekcja timerów: { id, enabled, label, iso, targetUtc, finished }
-  let timers = [];
-  let timerIdSeq = 1;
-  let selectedTimerId = null;
-  let activePanelView = 'clock';
-  let controlsOpen = false;
+  const DISPLAY_TIMEZONE_KEY = 'displayTimezone';
+  const appState = {
+    syncOffset: Number(localStorage.getItem("lastValidOffset")) || 0,
+    manualTimeOffset: Number(localStorage.getItem("manualTimeOffset")) || 0,
+    timers: [],
+    timerIdSeq: 1,
+    selectedTimerId: null,
+    activePanelView: 'clock',
+    clockShiftMode: 'offset',
+    controlsOpen: false,
+    uiDirty: true,
+    warnOrangeMin: Number(localStorage.getItem('warnOrangeMin')) || 15,
+    warnRedMin: Number(localStorage.getItem('warnRedMin')) || 5,
+    colorPreset: localStorage.getItem('colorPreset') || 'default'
+  };
   let persistTimer = null;
   let lastPersistedStateRaw = null;
   let pendingStateRaw = null;
-
-  // --- Progi kolorów (globalnie) ---
-  let warnOrangeMin = Number(localStorage.getItem('warnOrangeMin')) || 15;
-  let warnRedMin = Number(localStorage.getItem('warnRedMin')) || 5;
-  let colorPreset = localStorage.getItem('colorPreset') || 'default';
+  const runtimeState = {
+    lastSecond: -1,
+    lastUiRefreshSecond: -1,
+    currentTzOffsetForSavedZone: null
+  };
 
   // --- Abbreviations / skróty stref (do odświeżania etykiet) ---
   const tzAbbrList = [
@@ -641,11 +890,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // --- Parsowanie dat w wybranej strefie ---
   window.isoToUtcMillis = function(iso, tzOpt) {
     if (!iso) return null;
-    const tz = tzOpt || (localStorage.getItem("displayTimezone") || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw");
+    const tz = tzOpt || (localStorage.getItem(DISPLAY_TIMEZONE_KEY) || "Europe/Warsaw");
     return luxon.DateTime.fromISO(iso, { zone: tz }).toUTC().toMillis();
   };
   function recomputeTargetsForTz(tz) {
-    for (const t of timers) t.targetUtc = t.iso ? isoToUtcMillis(t.iso, tz) : null;
+    for (const t of appState.timers) t.targetUtc = t.iso ? isoToUtcMillis(t.iso, tz) : null;
   }
 
   // --- Referencje DOM ---
@@ -663,13 +912,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const showTimersPanelBtn = document.getElementById("showTimersPanel");
   const showClockPanelFromTimersBtn = document.getElementById("showClockPanelFromTimers");
   const showTimersPanelFromTimersBtn = document.getElementById("showTimersPanelFromTimers");
-  const timerEditorEl = document.getElementById("timerEditor");
-  const timerEditorTitleEl = document.getElementById("timerEditorTitle");
-  const timerLabelInput = document.getElementById("timerLabelInput");
-  const timerTargetInput = document.getElementById("timerTargetInput");
-  const saveTimerChangesBtn = document.getElementById("saveTimerChanges");
-  const resetSelectedTimerBtn = document.getElementById("resetSelectedTimer");
-  const deleteSelectedTimerBtn = document.getElementById("deleteSelectedTimer");
+  const timersEmptyEl = document.getElementById("timersEmpty");
+  const shiftModeOffsetBtn = document.getElementById("shiftModeOffset");
+  const shiftModeExactBtn = document.getElementById("shiftModeExact");
+  const shiftOffsetSection = document.getElementById("shiftOffsetSection");
+  const shiftExactSection = document.getElementById("shiftExactSection");
   const manualClockInput = document.getElementById("manualClockInput");
   const applyManualOffsetBtn = document.getElementById("applyManualOffset");
   const applyManualClockBtn = document.getElementById("applyManualClock");
@@ -686,18 +933,23 @@ document.addEventListener("DOMContentLoaded", function () {
   const shiftSeconds = document.getElementById("shiftSeconds");
 
   function getDisplayTimezone() {
-    return localStorage.getItem("displayTimezone")
-      || localStorage.getItem("lastSyncTimezone")
-      || localStorage.getItem("lastUsedTimezone")
-      || "Europe/Warsaw";
+    return localStorage.getItem(DISPLAY_TIMEZONE_KEY) || "Europe/Warsaw";
+  }
+
+  function setDisplayTimezone(tz) {
+    localStorage.setItem(DISPLAY_TIMEZONE_KEY, tz);
+  }
+
+  function markUiDirty() {
+    appState.uiDirty = true;
   }
 
   function getSyncedNowUtc() {
-    return Date.now() + syncOffset;
+    return Date.now() + appState.syncOffset;
   }
 
   function getDisplayNowUtc() {
-    return getSyncedNowUtc() + manualTimeOffset;
+    return getSyncedNowUtc() + appState.manualTimeOffset;
   }
 
   function formatDateTimeLocal(dt) {
@@ -759,16 +1011,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function serializeAppState() {
     return {
-      timers: timers.map((t) => ({
+      timers: appState.timers.map((t) => ({
         id: t.id,
         enabled: !!t.enabled,
         label: t.label || '',
         iso: t.iso || null
       })),
-      timerIdSeq,
-      selectedTimerId,
-      activePanelView,
-      controlsOpen
+      timerIdSeq: appState.timerIdSeq,
+      selectedTimerId: appState.selectedTimerId,
+      activePanelView: appState.activePanelView,
+      clockShiftMode: appState.clockShiftMode,
+      controlsOpen: appState.controlsOpen
     };
   }
 
@@ -824,14 +1077,14 @@ document.addEventListener("DOMContentLoaded", function () {
     if (manualClockInput && document.activeElement !== manualClockInput) {
       manualClockInput.value = formatDateTimeLocal(displayNow);
     }
-    setOffsetInputsFromMs(manualTimeOffset);
+    setOffsetInputsFromMs(appState.manualTimeOffset);
     if (displayedTimeStatus) {
       displayedTimeStatus.textContent = `Current displayed time: ${displayNow.toFormat("yyyy-LL-dd HH:mm:ss")}`;
     }
     if (manualOffsetStatus) {
-      manualOffsetStatus.textContent = manualTimeOffset === 0
+      manualOffsetStatus.textContent = appState.manualTimeOffset === 0
         ? "Shift: off"
-        : `Shift: ${formatDuration(manualTimeOffset)}`;
+        : `Shift: ${formatDuration(appState.manualTimeOffset)}`;
     }
   }
 
@@ -839,11 +1092,31 @@ document.addEventListener("DOMContentLoaded", function () {
     return (t.label && t.label.trim()) || t.id;
   }
 
+  function splitIsoLocal(iso) {
+    if (!iso || typeof iso !== 'string') return { date: '', time: '' };
+    const [datePart = '', timePart = ''] = iso.split('T');
+    return { date: datePart, time: timePart ? timePart.slice(0, 8) : '' };
+  }
+
   function timerPreviewText(t) {
-    if (!t.targetUtc || !t.iso) return "No target set";
+    if (!t.targetUtc || !t.iso) return "--";
     const tz = getDisplayTimezone();
     const dt = luxon.DateTime.fromMillis(t.targetUtc, { zone: "utc" }).setZone(tz);
     return dt.toFormat("yyyy-LL-dd HH:mm:ss");
+  }
+
+  function timerRemainingText(t, nowUtc = getDisplayNowUtc()) {
+    if (!t.enabled) return "off";
+    if (t.targetUtc == null) return "--";
+    const diff = t.targetUtc - nowUtc;
+    const isFuture = diff > 0;
+    const abs = Math.abs(diff);
+    const totalSec = isFuture ? Math.ceil(abs / 1000) : Math.floor(abs / 1000);
+    const th = Math.floor(totalSec / 3600);
+    const tm = Math.floor((totalSec % 3600) / 60);
+    const ts = totalSec % 60;
+    const sign = isFuture ? '-' : '+';
+    return `${sign}${th}:${String(tm).padStart(2,'0')}:${String(ts).padStart(2,'0')}`;
   }
 
   function timerStateText(t) {
@@ -855,31 +1128,49 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function refreshTimerRowUi(row, t) {
     if (!row || !t) return;
-    const nameEl = row.querySelector('.timer-name');
-    const previewEl = row.querySelector('.timer-preview');
-    const stateEl = row.querySelector('.timer-state');
-    const enableCb = row.querySelector('.enableTimer');
-    if (nameEl) nameEl.textContent = timerDisplayName(t);
-    if (previewEl) previewEl.textContent = timerPreviewText(t);
+    const labelInput = row.querySelector('.timer-label-input');
+    const dateInput = row.querySelector('.timer-date-input');
+    const timeInput = row.querySelector('.timer-time-input');
+    const targetHint = row.querySelector('.target-hint');
+    const summaryName = row.querySelector('.timer-summary-name');
+    const summaryTarget = row.querySelector('.timer-summary-target');
+    const remainingEl = row.querySelector('.timer-remaining');
+    const stateEl = row.querySelector('.timer-state-text');
+    const toggleBtn = row.querySelector('.toggleTimerRow');
+    const parts = splitIsoLocal(t.iso);
+    if (summaryName) summaryName.textContent = timerDisplayName(t);
+    if (summaryTarget) summaryTarget.textContent = t.iso ? timerPreviewText(t) : 'No target set';
+    if (labelInput && document.activeElement !== labelInput) labelInput.value = t.label || '';
+    if (dateInput && document.activeElement !== dateInput) dateInput.value = parts.date;
+    if (timeInput && document.activeElement !== timeInput) timeInput.value = parts.time;
+    if (targetHint) targetHint.textContent = t.iso ? timerPreviewText(t) : 'No target set';
+    if (remainingEl) remainingEl.textContent = timerRemainingText(t);
     if (stateEl) stateEl.textContent = timerStateText(t);
-    if (enableCb) enableCb.checked = !!t.enabled;
+    if (toggleBtn) {
+      toggleBtn.textContent = t.enabled ? 'On' : 'Off';
+      toggleBtn.classList.toggle('is-on', !!t.enabled);
+      toggleBtn.classList.toggle('is-off', !t.enabled);
+    }
   }
 
   function refreshTimersSummary() {
     if (!timersSummaryEl) return;
-    const total = timers.length;
-    const active = timers.filter(t => t.enabled && t.targetUtc !== null).length;
+    const total = appState.timers.length;
+    const active = appState.timers.filter(t => t.enabled && t.targetUtc !== null).length;
     timersSummaryEl.innerHTML = `<span>${total} timers</span><span>${active} active</span>`;
+    if (timersEmptyEl) timersEmptyEl.classList.toggle('hidden', total > 0);
   }
 
   function findTimerById(id) {
-    return timers.find(t => t.id === id) || null;
+    return appState.timers.find(t => t.id === id) || null;
   }
 
   function selectTimer(id) {
-    selectedTimerId = id;
-    refreshTimerEditor();
+    appState.selectedTimerId = id;
     refreshTimerListSelection();
+    const selectedRow = timersListEl ? timersListEl.querySelector(`.timer-row[data-id="${id}"]`) : null;
+    if (selectedRow) selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    markUiDirty();
     persistAppState();
   }
 
@@ -887,25 +1178,90 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!timersListEl) return;
     const rows = timersListEl.querySelectorAll('.timer-row');
     rows.forEach((row) => {
-      row.classList.toggle('selected', row.dataset.id === selectedTimerId);
+      row.classList.toggle('selected', row.dataset.id === appState.selectedTimerId);
     });
   }
 
-  function refreshTimerEditor() {
-    if (!timerEditorEl) return;
-    const t = findTimerById(selectedTimerId);
-    if (!t) {
-      timerEditorEl.classList.add('hidden');
-      return;
+  function refreshTimerEditor() {}
+
+  function saveTimerLabelFromRow(t, row) {
+    if (!t || !row) return;
+    const labelInput = row.querySelector('.timer-label-input');
+    t.label = (labelInput && labelInput.value || '').trim();
+    refreshTimerRowUi(row, t);
+    markUiDirty();
+    persistAppState();
+    updateClock();
+  }
+
+  function saveTimerTargetFromRow(t, row) {
+    if (!t || !row) return;
+    const dateInput = row.querySelector('.timer-date-input');
+    const timeInput = row.querySelector('.timer-time-input');
+    const current = splitIsoLocal(t.iso);
+    const datePart = (dateInput && dateInput.value) || current.date;
+    const timePart = (timeInput && timeInput.value) || current.time || '00:00:00';
+    if (!datePart && !timePart) {
+      t.iso = null;
+      t.targetUtc = null;
+    } else if (datePart) {
+      const normalizedTime = timePart.length === 5 ? `${timePart}:00` : timePart;
+      t.iso = `${datePart}T${normalizedTime}`;
+      t.targetUtc = isoToUtcMillis(t.iso, getDisplayTimezone());
     }
-    timerEditorEl.classList.remove('hidden');
-    if (timerEditorTitleEl) timerEditorTitleEl.textContent = `Editing ${timerDisplayName(t)}`;
-    if (timerLabelInput) timerLabelInput.value = t.label || '';
-    if (timerTargetInput) timerTargetInput.value = t.iso || '';
+    t.finished = false;
+    refreshTimerRowUi(row, t);
+    markUiDirty();
+    persistAppState();
+    updateClock();
+  }
+
+  function resetTimerData(t, row) {
+    if (!t) return;
+    t.iso = null;
+    t.targetUtc = null;
+    t.finished = false;
+    if (row) refreshTimerRowUi(row, t);
+    const el = document.getElementById(t.id);
+    if (el) { el.innerText = ""; el.style.color = "white"; el.style.display = "none"; }
+    markUiDirty();
+    persistAppState();
+    updateClock();
+  }
+
+  function deleteTimerData(t, row) {
+    if (!t) return;
+    appState.timers = appState.timers.filter(x => x.id !== t.id);
+    if (row) row.remove();
+    const el = document.getElementById(t.id);
+    if (el) el.remove();
+    if (appState.selectedTimerId === t.id) {
+      appState.selectedTimerId = appState.timers[0] ? appState.timers[0].id : null;
+    }
+    refreshTimerListSelection();
+    markUiDirty();
+    persistAppState();
+    updateClock();
+  }
+
+  function refreshClockShiftModeUi() {
+    const isOffset = appState.clockShiftMode !== 'exact';
+    appState.clockShiftMode = isOffset ? 'offset' : 'exact';
+    if (shiftModeOffsetBtn) shiftModeOffsetBtn.classList.toggle('active', isOffset);
+    if (shiftModeExactBtn) shiftModeExactBtn.classList.toggle('active', !isOffset);
+    if (shiftOffsetSection) shiftOffsetSection.classList.toggle('hidden', !isOffset);
+    if (shiftExactSection) shiftExactSection.classList.toggle('hidden', isOffset);
+  }
+
+  function setClockShiftMode(mode) {
+    appState.clockShiftMode = mode === 'exact' ? 'exact' : 'offset';
+    refreshClockShiftModeUi();
+    markUiDirty();
+    persistAppState();
   }
 
   function syncPanelTabButtons() {
-    const isClock = activePanelView === 'clock';
+    const isClock = appState.activePanelView === 'clock';
     if (showClockPanelBtn) showClockPanelBtn.classList.toggle('active', isClock);
     if (showTimersPanelBtn) showTimersPanelBtn.classList.toggle('active', !isClock);
     if (showClockPanelFromTimersBtn) showClockPanelFromTimersBtn.classList.toggle('active', isClock);
@@ -913,30 +1269,28 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function setPanelView(view) {
-    activePanelView = view === 'timers' ? 'timers' : 'clock';
-    offsetControls.style.display = controlsOpen && activePanelView === 'clock' ? 'block' : 'none';
-    timerControls.style.display = controlsOpen && activePanelView === 'timers' ? 'block' : 'none';
+    appState.activePanelView = view === 'timers' ? 'timers' : 'clock';
+    offsetControls.style.display = appState.controlsOpen && appState.activePanelView === 'clock' ? 'block' : 'none';
+    timerControls.style.display = appState.controlsOpen && appState.activePanelView === 'timers' ? 'block' : 'none';
     syncPanelTabButtons();
     positionControlPanels();
     scaleToFitWindow();
+    markUiDirty();
     persistAppState();
   }
 
   function toggleControls() {
-    controlsOpen = !controlsOpen;
-    if (!controlsOpen) {
+    appState.controlsOpen = !appState.controlsOpen;
+    if (!appState.controlsOpen) {
       offsetControls.style.display = 'none';
       timerControls.style.display = 'none';
     } else {
-      setPanelView(activePanelView);
+      setPanelView(appState.activePanelView);
       return;
     }
+    markUiDirty();
     persistAppState();
   }
-
-  // --- Aktualizacja zegara i timerów ---
-  let lastSecond = -1;
-  let currentTzOffsetForSavedZone = null;
 
   function updateClock() {
     const tz = getDisplayTimezone();
@@ -957,15 +1311,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     try {
       const currentOffset = localNow.offset;
-      if (currentTzOffsetForSavedZone === null || currentOffset !== currentTzOffsetForSavedZone) {
-        currentTzOffsetForSavedZone = currentOffset;
+      if (runtimeState.currentTzOffsetForSavedZone === null || currentOffset !== runtimeState.currentTzOffsetForSavedZone) {
+        runtimeState.currentTzOffsetForSavedZone = currentOffset;
         refreshTimezoneLabels();
       }
     } catch {}
 
-    if (localNow.second !== lastSecond) {
+    if (localNow.second !== runtimeState.lastSecond) {
       for (let i = 0; i < 60; i++) dots[i].setAttribute("fill", i <= localNow.second ? "red" : "black");
-      lastSecond = localNow.second;
+      runtimeState.lastSecond = localNow.second;
     }
 
     function updateTimerElement(t) {
@@ -991,8 +1345,8 @@ document.addEventListener("DOMContentLoaded", function () {
       else el.innerText = timeText;
 
       if (isFuture) {
-        if (abs <= warnRedMin * 60 * 1000) el.style.color = 'red';
-        else if (abs <= warnOrangeMin * 60 * 1000) el.style.color = 'orange';
+        if (abs <= appState.warnRedMin * 60 * 1000) el.style.color = 'red';
+        else if (abs <= appState.warnOrangeMin * 60 * 1000) el.style.color = 'orange';
         else el.style.color = 'white';
       } else {
         el.style.color = 'lime';
@@ -1001,15 +1355,19 @@ document.addEventListener("DOMContentLoaded", function () {
       el.style.display = "block";
     }
 
-    for (const t of timers) updateTimerElement(t);
-    for (const t of timers) {
-      const row = timersListEl ? timersListEl.querySelector(`.timer-row[data-id="${t.id}"]`) : null;
-      refreshTimerRowUi(row, t);
-    }
+    for (const t of appState.timers) updateTimerElement(t);
 
-    refreshManualClockUi();
-    refreshTimersSummary();
-    applyLayout();
+    if (appState.uiDirty || localNow.second !== runtimeState.lastUiRefreshSecond) {
+      for (const t of appState.timers) {
+        const row = timersListEl ? timersListEl.querySelector(`.timer-row[data-id="${t.id}"]`) : null;
+        refreshTimerRowUi(row, t);
+      }
+      refreshManualClockUi();
+      refreshTimersSummary();
+      applyLayout();
+      runtimeState.lastUiRefreshSecond = localNow.second;
+      appState.uiDirty = false;
+    }
   }
 
   // --- Synchronizacja czasu (jak wcześniej) ---
@@ -1039,8 +1397,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const utc = luxon.DateTime.fromISO(data.utc, { zone: "utc" });
         serverTime = utc.toMillis();
       }
-      syncOffset = serverTime - Date.now();
-      localStorage.setItem("lastValidOffset", syncOffset);
+      appState.syncOffset = serverTime - Date.now();
+      localStorage.setItem("lastValidOffset", appState.syncOffset);
       updateClock();
       status.textContent = "Ω";
       status.className = "ok";
@@ -1093,11 +1451,13 @@ document.addEventListener("DOMContentLoaded", function () {
       wrapper.style.left = '0px';
       wrapper.style.top = '0px';
     } else {
+      const panelW = getVisiblePanelWidth();
+      const availableW = Math.max(640, window.innerWidth - panelW - 24);
       wrapper.style.width = '1080px';
       wrapper.style.height = '1080px';
-      const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1080);
+      const scale = Math.min(availableW / 1080, window.innerHeight / 1080);
       wrapper.style.transform = `scale(${scale})`;
-      wrapper.style.left = `${(window.innerWidth - 1080 * scale) / 2}px`;
+      wrapper.style.left = `${Math.max(0, (availableW - 1080 * scale) / 2)}px`;
       wrapper.style.top = `${(window.innerHeight - 1080 * scale) / 2}px`;
     }
   }
@@ -1108,27 +1468,27 @@ document.addEventListener("DOMContentLoaded", function () {
   scaleToFitWindow();
 
   function getVisibleTimerIds() {
-    return timers.filter(t => t.enabled && t.targetUtc !== null).map(t => t.id);
+    return appState.timers.filter(t => t.enabled && t.targetUtc !== null).map(t => t.id);
   }
 
   function applyDefaultLayout() {
     scaleToFitWindow();
     const svgEl = document.querySelector('#wrapper svg');
     if (svgEl) svgEl.style.display = 'block';
+    const visible = getVisibleTimerIds();
+    const hasDate = !!(showDateCheckbox && showDateCheckbox.checked);
 
     output.style.top = '50%';
     output.style.left = '50%';
-    output.style.fontSize = '120px';
+    output.style.fontSize = '156px';
     output.style.letterSpacing = '-0.02em';
     output.style.display = 'block';
 
     dateEl.style.top = '60%';
     dateEl.style.left = '50%';
-    dateEl.style.fontSize = '50px';
+    dateEl.style.fontSize = '52px';
     dateEl.style.letterSpacing = '-0.01em';
-    dateEl.style.display = showDateCheckbox && showDateCheckbox.checked ? 'block' : 'none';
-
-    const visible = getVisibleTimerIds();
+    dateEl.style.display = hasDate ? 'block' : 'none';
     const baseTimerPx = 60;
 
     // Prevent vertical overlap by capping font size per band (top/bottom)
@@ -1232,7 +1592,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Ukryj niewidoczne
-    for (const t of timers) {
+    for (const t of appState.timers) {
       if (!visible.includes(t.id)) {
         const el = document.getElementById(t.id);
         if (el) el.style.display = 'none';
@@ -1385,59 +1745,89 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- Budowa wiersza sterowania timerem + tworzenie timera ---
   function makeTimerRow(t) {
-    const row = document.createElement('div');
+    const row = document.createElement('tr');
     row.className = 'timer-row';
     row.dataset.id = t.id;
     row.innerHTML = `
-      <div class="timer-topline">
-        <label class="switch">
-          <input type="checkbox" class="enableTimer" ${t.enabled ? 'checked' : ''}>
-          <span class="slider"></span>
-        </label>
-        <div class="timer-name"></div>
-        <div class="timer-preview"></div>
-        <div class="timer-state"></div>
-      </div>
-      <div class="button-row">
-        <button class="resetTimer">Reset</button>
-        <button class="deleteTimer">Delete</button>
-      </div>
+      <td class="timer-main-cell">
+        <div class="timer-main-grid">
+          <div class="timer-summary">
+            <div class="timer-summary-name"></div>
+            <div class="timer-summary-target"></div>
+          </div>
+          <div class="timer-editor-inline">
+            <input type="text" class="table-input timer-label-input" placeholder="Label">
+            <div class="timer-inline-row">
+              <input type="date" class="table-input timer-date-input">
+              <div class="timer-target-stack">
+                <input type="time" class="table-input timer-time-input" step="1">
+                <button class="clearTimerRow" type="button">Clr</button>
+              </div>
+            </div>
+            <div class="target-hint"></div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div class="timer-remaining"></div>
+        <div class="timer-state-text"></div>
+      </td>
+      <td>
+        <div class="timer-actions">
+          <button class="toggleTimerRow" type="button">On</button>
+          <button class="deleteTimerRow danger" type="button">Del</button>
+        </div>
+      </td>
     `;
 
     function refreshRow() {
       refreshTimerRowUi(row, t);
     }
 
-    const enableCb = row.querySelector('.enableTimer');
-    enableCb.addEventListener('change', (e) => {
+    const toggleBtn = row.querySelector('.toggleTimerRow');
+    const labelInput = row.querySelector('.timer-label-input');
+    const dateInput = row.querySelector('.timer-date-input');
+    const timeInput = row.querySelector('.timer-time-input');
+    if (toggleBtn) toggleBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      t.enabled = !!enableCb.checked;
+      t.enabled = !t.enabled;
       refreshRow();
-      updateClock();
-    });
-
-    row.querySelector('.resetTimer').addEventListener('click', () => {
-      t.iso = null; t.targetUtc = null; t.finished = false;
-      const el = document.getElementById(t.id);
-      if (el) { el.innerText = ""; el.style.color = "white"; el.style.display = "none"; }
-      refreshRow();
-      refreshTimerEditor();
+      markUiDirty();
       persistAppState();
       updateClock();
     });
 
-    row.querySelector('.deleteTimer').addEventListener('click', () => {
-      const idx = timers.findIndex(x => x.id === t.id);
-      if (idx !== -1) timers.splice(idx, 1);
-      const el = document.getElementById(t.id);
-      if (el && el.parentNode) el.parentNode.removeChild(el);
-      if (row && row.parentNode) row.parentNode.removeChild(row);
-      if (selectedTimerId === t.id) {
-        selectedTimerId = timers[0] ? timers[0].id : null;
-        refreshTimerEditor();
-      }
-      persistAppState();
-      updateClock();
+    [labelInput, dateInput, timeInput].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('focus', () => selectTimer(t.id));
+      el.addEventListener('click', (e) => e.stopPropagation());
+    });
+
+    if (labelInput) {
+      labelInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveTimerLabelFromRow(t, row);
+        }
+      });
+      labelInput.addEventListener('blur', () => saveTimerLabelFromRow(t, row));
+    }
+
+    [dateInput, timeInput].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('change', () => saveTimerTargetFromRow(t, row));
+      el.addEventListener('blur', () => saveTimerTargetFromRow(t, row));
+    });
+
+    const clearBtn = row.querySelector('.clearTimerRow');
+    const deleteBtn = row.querySelector('.deleteTimerRow');
+    if (clearBtn) clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetTimerData(t, row);
+    });
+    if (deleteBtn) deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteTimerData(t, row);
     });
 
     row.addEventListener('click', () => {
@@ -1449,7 +1839,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function addTimer() {
-    const id = `timer${timerIdSeq++}`;
+    const id = `timer${appState.timerIdSeq++}`;
     const disp = document.createElement('div');
     disp.id = id;
     disp.className = 'timer';
@@ -1459,70 +1849,23 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('wrapper').appendChild(disp);
 
     const t = { id, enabled: true, label: '', iso: null, targetUtc: null, finished: false };
-    timers.push(t);
+    appState.timers.push(t);
 
     const row = makeTimerRow(t);
     timersListEl.appendChild(row);
 
     selectTimer(id);
     persistAppState();
+    markUiDirty();
     applyLayout();
     return t;
   }
 
   if (addTimerBtn) addTimerBtn.addEventListener('click', () => addTimer());
 
-  if (saveTimerChangesBtn) {
-    saveTimerChangesBtn.addEventListener('click', () => {
-      const t = findTimerById(selectedTimerId);
-      if (!t) return;
-      t.label = (timerLabelInput && timerLabelInput.value || '').trim();
-      const iso = timerTargetInput && timerTargetInput.value || null;
-      t.iso = iso;
-      const tz = getDisplayTimezone();
-      t.targetUtc = iso ? isoToUtcMillis(iso, tz) : null;
-      t.finished = false;
-      const row = timersListEl.querySelector(`.timer-row[data-id="${t.id}"]`);
-      refreshTimerRowUi(row, t);
-      refreshTimerEditor();
-      persistAppState();
-      updateClock();
-    });
-  }
-
-  if (resetSelectedTimerBtn) {
-    resetSelectedTimerBtn.addEventListener('click', () => {
-      const t = findTimerById(selectedTimerId);
-      if (!t) return;
-      t.iso = null;
-      t.targetUtc = null;
-      t.finished = false;
-      refreshTimerEditor();
-      persistAppState();
-      updateClock();
-    });
-  }
-
-  if (deleteSelectedTimerBtn) {
-    deleteSelectedTimerBtn.addEventListener('click', () => {
-      const t = findTimerById(selectedTimerId);
-      if (!t) return;
-      const row = timersListEl.querySelector(`.timer-row[data-id="${t.id}"]`);
-      if (row) row.remove();
-      const el = document.getElementById(t.id);
-      if (el) el.remove();
-      timers = timers.filter(x => x.id !== t.id);
-      selectedTimerId = timers[0] ? timers[0].id : null;
-      refreshTimerEditor();
-      refreshTimerListSelection();
-      persistAppState();
-      updateClock();
-    });
-  }
-
   function restoreTimersFromState(state) {
     if (!state || !Array.isArray(state.timers)) return;
-    timers = [];
+    appState.timers = [];
     timersListEl.innerHTML = '';
     const wrapper = document.getElementById('wrapper');
     if (wrapper) {
@@ -1530,7 +1873,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     let maxNumericId = 0;
     for (const saved of state.timers) {
-      const id = saved && saved.id ? String(saved.id) : `timer${timerIdSeq++}`;
+      const id = saved && saved.id ? String(saved.id) : `timer${appState.timerIdSeq++}`;
       const disp = document.createElement('div');
       disp.id = id;
       disp.className = 'timer';
@@ -1547,33 +1890,35 @@ document.addEventListener("DOMContentLoaded", function () {
         targetUtc: saved.iso ? isoToUtcMillis(saved.iso, getDisplayTimezone()) : null,
         finished: false
       };
-      timers.push(t);
+      appState.timers.push(t);
       timersListEl.appendChild(makeTimerRow(t));
 
       const match = /^timer(\d+)$/.exec(id);
       if (match) maxNumericId = Math.max(maxNumericId, Number(match[1]));
     }
-    timerIdSeq = Math.max(Number(state.timerIdSeq) || 1, maxNumericId + 1);
-    selectedTimerId = state.selectedTimerId && findTimerById(state.selectedTimerId)
+    appState.timerIdSeq = Math.max(Number(state.timerIdSeq) || 1, maxNumericId + 1);
+    appState.selectedTimerId = state.selectedTimerId && findTimerById(state.selectedTimerId)
       ? state.selectedTimerId
-      : (timers[0] ? timers[0].id : null);
-    if (selectedTimerId) selectTimer(selectedTimerId);
+      : (appState.timers[0] ? appState.timers[0].id : null);
+    if (appState.selectedTimerId) selectTimer(appState.selectedTimerId);
     else {
       refreshTimerEditor();
       refreshTimerListSelection();
     }
+    markUiDirty();
   }
 
   // Reset All
   const resetAllBtn = document.getElementById("resetTimers");
   if (resetAllBtn) {
     resetAllBtn.addEventListener('click', () => {
-      for (const t of timers) {
+      for (const t of appState.timers) {
         t.iso = null; t.targetUtc = null; t.finished = false;
         const el = document.getElementById(t.id);
         if (el) { el.innerText = ""; el.style.color = "white"; el.style.display = "none"; }
       }
       refreshTimerEditor();
+      markUiDirty();
       persistAppState();
       updateClock();
     });
@@ -1590,13 +1935,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Inicjalizacja strefy czasu + serwera czasu
   function initializeTimezone() {
-    const savedDisplay = localStorage.getItem("displayTimezone");
-    const savedTz = savedDisplay || localStorage.getItem("lastSyncTimezone") || localStorage.getItem("lastUsedTimezone") || "Europe/Warsaw";
+    const legacyTz = localStorage.getItem("lastUsedTimezone") || localStorage.getItem("lastSyncTimezone");
+    if (!localStorage.getItem(DISPLAY_TIMEZONE_KEY) && legacyTz) {
+      localStorage.setItem(DISPLAY_TIMEZONE_KEY, legacyTz);
+    }
+    const savedTz = getDisplayTimezone();
     timezoneSelect.value = savedTz;
     timezoneSelect.addEventListener("change", () => {
-      localStorage.setItem("displayTimezone", timezoneSelect.value);
-      localStorage.setItem("lastUsedTimezone", timezoneSelect.value);
+      setDisplayTimezone(timezoneSelect.value);
       recomputeTargetsForTz(timezoneSelect.value);
+      markUiDirty();
       updateClock();
     });
 
@@ -1608,16 +1956,17 @@ document.addEventListener("DOMContentLoaded", function () {
     ntpInput.value = localStorage.getItem("ntpServer") || "";
     apiInput.value = localStorage.getItem("apiServer") || "https://timeapi.io";
 
-    timeSourceSelect.addEventListener("change", () => { localStorage.setItem("timeSource", timeSourceSelect.value); synchronizeTime(); });
-    ntpInput.addEventListener("change", () => { localStorage.setItem("ntpServer", ntpInput.value); synchronizeTime(); });
-    apiInput.addEventListener("change", () => { localStorage.setItem("apiServer", apiInput.value); synchronizeTime(); });
+    timeSourceSelect.addEventListener("change", () => { localStorage.setItem("timeSource", timeSourceSelect.value); markUiDirty(); synchronizeTime(); });
+    ntpInput.addEventListener("change", () => { localStorage.setItem("ntpServer", ntpInput.value); markUiDirty(); synchronizeTime(); });
+    apiInput.addEventListener("change", () => { localStorage.setItem("apiServer", apiInput.value); markUiDirty(); synchronizeTime(); });
   }
   initializeTimezone();
 
   const savedAppState = loadAppState();
   if (savedAppState) {
-    activePanelView = savedAppState.activePanelView === 'timers' ? 'timers' : 'clock';
-    controlsOpen = !!savedAppState.controlsOpen;
+    appState.activePanelView = savedAppState.activePanelView === 'timers' ? 'timers' : 'clock';
+    appState.clockShiftMode = savedAppState.clockShiftMode === 'exact' ? 'exact' : 'offset';
+    appState.controlsOpen = !!savedAppState.controlsOpen;
     restoreTimersFromState(savedAppState);
   }
 
@@ -1634,6 +1983,7 @@ document.addEventListener("DOMContentLoaded", function () {
     showMillisecondsCheckbox.checked = savedShowMilliseconds !== "0";
     showMillisecondsCheckbox.addEventListener("change", () => {
       localStorage.setItem("showMilliseconds", showMillisecondsCheckbox.checked ? "1" : "0");
+      markUiDirty();
       applyLayout();
       updateClock();
     });
@@ -1644,6 +1994,7 @@ document.addEventListener("DOMContentLoaded", function () {
     showDateCheckbox.checked = savedShowDate !== "0";
     showDateCheckbox.addEventListener("change", () => {
       localStorage.setItem("showDate", showDateCheckbox.checked ? "1" : "0");
+      markUiDirty();
       applyLayout();
       updateClock();
     });
@@ -1653,11 +2004,14 @@ document.addEventListener("DOMContentLoaded", function () {
   if (showTimersPanelBtn) showTimersPanelBtn.addEventListener('click', () => setPanelView('timers'));
   if (showClockPanelFromTimersBtn) showClockPanelFromTimersBtn.addEventListener('click', () => setPanelView('clock'));
   if (showTimersPanelFromTimersBtn) showTimersPanelFromTimersBtn.addEventListener('click', () => setPanelView('timers'));
+  if (shiftModeOffsetBtn) shiftModeOffsetBtn.addEventListener('click', () => setClockShiftMode('offset'));
+  if (shiftModeExactBtn) shiftModeExactBtn.addEventListener('click', () => setClockShiftMode('exact'));
 
   if (applyManualOffsetBtn) {
     applyManualOffsetBtn.addEventListener("click", () => {
-      manualTimeOffset = getOffsetInputsMs();
-      localStorage.setItem("manualTimeOffset", String(manualTimeOffset));
+      appState.manualTimeOffset = getOffsetInputsMs();
+      localStorage.setItem("manualTimeOffset", String(appState.manualTimeOffset));
+      markUiDirty();
       updateClock();
     });
   }
@@ -1669,16 +2023,18 @@ document.addEventListener("DOMContentLoaded", function () {
       const tz = getDisplayTimezone();
       const desiredUtc = isoToUtcMillis(iso, tz);
       if (desiredUtc == null || Number.isNaN(desiredUtc)) return;
-      manualTimeOffset = desiredUtc - getSyncedNowUtc();
-      localStorage.setItem("manualTimeOffset", String(manualTimeOffset));
+      appState.manualTimeOffset = desiredUtc - getSyncedNowUtc();
+      localStorage.setItem("manualTimeOffset", String(appState.manualTimeOffset));
+      markUiDirty();
       updateClock();
     });
   }
 
   if (resetManualClockBtn) {
     resetManualClockBtn.addEventListener("click", () => {
-      manualTimeOffset = 0;
+      appState.manualTimeOffset = 0;
       localStorage.setItem("manualTimeOffset", "0");
+      markUiDirty();
       updateClock();
     });
   }
@@ -1699,21 +2055,23 @@ document.addEventListener("DOMContentLoaded", function () {
   const redMinInput = document.getElementById('redMin');
 
   function applyPreset(preset) {
-    if (preset === 'short') { warnOrangeMin = 5; warnRedMin = 2; }
-    else if (preset === 'long') { warnOrangeMin = 30; warnRedMin = 10; }
-    else if (preset === 'xl') { warnOrangeMin = 60; warnRedMin = 15; }
+    if (preset === 'short') { appState.warnOrangeMin = 5; appState.warnRedMin = 2; }
+    else if (preset === 'long') { appState.warnOrangeMin = 30; appState.warnRedMin = 10; }
+    else if (preset === 'xl') { appState.warnOrangeMin = 60; appState.warnRedMin = 15; }
     else if (preset === 'custom') {
-      warnOrangeMin = Number(orangeMinInput.value) || 15;
-      warnRedMin = Number(redMinInput.value) || 5;
-    } else { warnOrangeMin = 15; warnRedMin = 5; }
+      appState.warnOrangeMin = Number(orangeMinInput.value) || 15;
+      appState.warnRedMin = Number(redMinInput.value) || 5;
+    } else { appState.warnOrangeMin = 15; appState.warnRedMin = 5; }
     localStorage.setItem('colorPreset', preset);
-    localStorage.setItem('warnOrangeMin', String(warnOrangeMin));
-    localStorage.setItem('warnRedMin', String(warnRedMin));
+    appState.colorPreset = preset;
+    localStorage.setItem('warnOrangeMin', String(appState.warnOrangeMin));
+    localStorage.setItem('warnRedMin', String(appState.warnRedMin));
+    markUiDirty();
     updateClock();
   }
 
   if (colorPresetSelect) {
-    if (colorPreset) colorPresetSelect.value = colorPreset;
+    if (appState.colorPreset) colorPresetSelect.value = appState.colorPreset;
     customBox.style.display = (colorPresetSelect.value === 'custom') ? 'block' : 'none';
     if (colorPresetSelect.value === 'custom') {
       orangeMinInput.value = localStorage.getItem('warnOrangeMin') || orangeMinInput.value;
@@ -1733,6 +2091,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (minimalModeCheckbox) minimalModeCheckbox.checked = savedMinimal;
   if (minimalModeCheckbox) minimalModeCheckbox.addEventListener("change", () => {
     localStorage.setItem("minimalMode", minimalModeCheckbox.checked ? "1" : "0");
+    markUiDirty();
     applyLayout();
     scaleToFitWindow();
   });
@@ -1747,6 +2106,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (minimalModeCheckbox) {
         minimalModeCheckbox.checked = !minimalModeCheckbox.checked;
         localStorage.setItem('minimalMode', minimalModeCheckbox.checked ? '1' : '0');
+        markUiDirty();
         applyLayout();
         scaleToFitWindow();
       }
@@ -1761,8 +2121,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Pierwszy layout
   refreshManualClockUi();
+  refreshClockShiftModeUi();
   syncPanelTabButtons();
-  if (controlsOpen) setPanelView(activePanelView);
+  if (appState.controlsOpen) setPanelView(appState.activePanelView);
   else {
     offsetControls.style.display = 'none';
     timerControls.style.display = 'none';
@@ -1809,7 +2170,6 @@ function refreshTimezoneLabels() {
   }
 }
 </script>
-</div>
 
   <div id="about" style="position:fixed; bottom:20px; right:20px; background:white; color:black; padding:10px; border-radius:8px; z-index:10; display:none; text-align: center;">
     <strong>About BIG RED CLOCK</strong>
