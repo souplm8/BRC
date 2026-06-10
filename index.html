@@ -1016,18 +1016,17 @@ document.addEventListener("DOMContentLoaded", function () {
   async function synchronizeTime() {
     const status = document.getElementById("sync-status");
     const source = document.getElementById("timeSourceSelect").value;
-    const tz = (document.getElementById("timezoneSelect").value || "Europe/Warsaw");
     try {
       let serverTime;
       if (source === "api") {
         let apiBase = document.getElementById("apiServerInput").value.trim() || localStorage.getItem("apiServer") || "https://timeapi.io";
         localStorage.setItem("apiServer", apiBase);
-        const response = await fetch(`${apiBase}/api/Time/current/zone?timeZone=${encodeURIComponent(tz)}`);
+        const response = await fetch(`${apiBase}/api/Time/current/zone?timeZone=${encodeURIComponent("UTC")}`);
         if (!response.ok) throw new Error("API time fetch error");
         const data = await response.json();
-        const zonedApiTime = luxon.DateTime.fromISO(data.dateTime, { zone: tz });
-        if (!zonedApiTime.isValid) throw new Error("Invalid API time payload");
-        serverTime = zonedApiTime.toUTC().toMillis();
+        const utcApiTime = luxon.DateTime.fromISO(data.dateTime, { zone: "utc" });
+        if (!utcApiTime.isValid) throw new Error("Invalid API time payload");
+        serverTime = utcApiTime.toMillis();
       } else {
         const ntpAddr = document.getElementById("ntpServerInput").value.trim();
         if (!ntpAddr) throw new Error("No NTP server address set");
@@ -1042,7 +1041,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       syncOffset = serverTime - Date.now();
       localStorage.setItem("lastValidOffset", syncOffset);
-      localStorage.setItem("lastSyncTimezone", tz);
       updateClock();
       status.textContent = "Ω";
       status.className = "ok";
